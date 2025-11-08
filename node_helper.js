@@ -33,6 +33,7 @@ module.exports = NodeHelper.create({
     this.imageCache = null; // Initialized when config is received
     this.imageProcessor = null; // Initialized when config is received
     this.config = null;
+    /* eslint-disable-next-line no-global-assign, no-implicit-globals */
     self = this;
   },
 

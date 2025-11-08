@@ -233,7 +233,7 @@ class SynologyPhotosClient {
         for (const [spaceKey, tagIdArray] of Object.entries(this.tagIds)) {
           const spaceId = spaceKey === 'shared'
             ? null
-            : parseInt(spaceKey);
+            : parseInt(spaceKey, 10);
           for (const tagId of tagIdArray) {
             const tagPhotos = await this.fetchPhotosByTagInSpace(tagId, spaceId);
             photos = photos.concat(tagPhotos);

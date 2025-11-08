@@ -133,7 +133,8 @@ class ImageCache {
    * Generate cache key from image URL or path
    */
   getCacheKey (imageIdentifier) {
-    return crypto.createHash('md5').update(imageIdentifier).digest('hex');
+    return crypto.createHash('md5').update(imageIdentifier)
+      .digest('hex');
   }
 
   /**
