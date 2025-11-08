@@ -42,6 +42,14 @@ cd MMM-SynPhotoSlideshow
 npm install
 ```
 
+**For production use** (to save disk space and exclude development tools):
+
+```sh
+npm run install:prod
+```
+
+This installs only the runtime dependencies (axios, dotenv, exif-js, node-cache, sharp) and excludes development dependencies like linters and test frameworks.
+
 ### Basic Configuration
 
 Add the module to the modules array in the `config/config.js` file. You must provide your Synology URL and either account credentials or a share token:
@@ -710,5 +718,9 @@ That's it!
 
 ## Developer commands
 
-- `node --run lint` - Run linting and formatter checks.
-- `node --run lint:fix` - Fix linting and formatter issues.
+- `npm run lint` - Run linting and formatter checks.
+- `npm run lint:fix` - Fix linting and formatter issues.
+- `npm test` - Run unit tests.
+- `npm run test:watch` - Run tests in watch mode.
+- `npm run test:coverage` - Run tests with coverage report.
+- `npm run install:prod` - Install only production dependencies (excludes dev dependencies like linters and test frameworks).

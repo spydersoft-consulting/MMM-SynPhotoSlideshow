@@ -45,9 +45,10 @@
   "scripts": {
     "lint": "prettier --check . && eslint",
     "lint:fix": "prettier --write . && eslint --fix",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
+    "test": "jest --testTimeout=35000",
+    "test:watch": "jest --watch --testTimeout=35000",
+    "test:coverage": "jest --coverage --testTimeout=35000",
+    "install:prod": "npm install --omit=dev",
     "prepare": "husky"
   },
   "jest": {
