@@ -306,6 +306,30 @@ The following properties can be configured:
       </td>
     </tr>
     <tr>
+      <td><code>enableImageCache</code></td>
+      <td>Boolean value, enables local disk caching of downloaded images for improved performance. When enabled, images are cached locally and preloaded in the background, significantly reducing load times on low-CPU devices.<br>
+        <br><b>Example:</b> <code>true</code>
+        <br><b>Default value:</b> <code>true</code>
+        <br>This value is <b>OPTIONAL</b>
+      </td>
+    </tr>
+    <tr>
+      <td><code>imageCacheMaxSize</code></td>
+      <td>Integer value, maximum size of the image cache in megabytes. The cache will automatically manage disk space and evict old images when this limit is reached.<br>
+        <br><b>Example:</b> <code>1000</code> for 1GB
+        <br><b>Default value:</b> <code>500</code> (500MB)
+        <br>This value is <b>OPTIONAL</b>
+      </td>
+    </tr>
+    <tr>
+      <td><code>imageCachePreloadCount</code></td>
+      <td>Integer value, number of upcoming images to preload in the background. Higher values improve responsiveness but use more network bandwidth initially.<br>
+        <br><b>Example:</b> <code>20</code>
+        <br><b>Default value:</b> <code>10</code>
+        <br>This value is <b>OPTIONAL</b>
+      </td>
+    </tr>
+    <tr>
     <tr>
       <td><code>slideshowSpeed</code></td>
       <td>Integer value, the length of time to show one image before switching to the next, in milliseconds.<br>

@@ -9,8 +9,9 @@ const sharp = require('sharp');
 const Log = require('../../../js/logger.js');
 
 class ImageProcessor {
-  constructor (config) {
+  constructor (config, imageCache = null) {
     this.config = config;
+    this.imageCache = imageCache;
   }
 
   /**
@@ -76,13 +77,31 @@ class ImageProcessor {
    */
   async downloadSynologyImage (imageUrl, synologyClient, callback) {
     try {
+      // Check cache first if enabled
+      if (this.imageCache && this.config.enableImageCache) {
+        const cached = await this.imageCache.get(imageUrl);
+
+        if (cached) {
+          Log.info('[MMM-SynPhotoSlideshow] Serving image from cache');
+          callback(cached);
+          return;
+        }
+      }
+
       Log.info('[MMM-SynPhotoSlideshow] Downloading Synology image...');
       const imageBuffer = await synologyClient.downloadPhoto(imageUrl);
 
       if (imageBuffer) {
         const base64 = imageBuffer.toString('base64');
+        const dataUrl = `data:image/jpeg;base64,${base64}`;
         Log.info(`[MMM-SynPhotoSlideshow] Downloaded Synology image: ${imageBuffer.length} bytes`);
-        callback(`data:image/jpeg;base64,${base64}`);
+
+        // Cache the image if caching is enabled
+        if (this.imageCache && this.config.enableImageCache) {
+          await this.imageCache.set(imageUrl, dataUrl);
+        }
+
+        callback(dataUrl);
       } else {
         Log.error('[MMM-SynPhotoSlideshow] Failed to download Synology image');
         callback(null);

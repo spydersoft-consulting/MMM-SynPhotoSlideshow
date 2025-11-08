@@ -20,6 +20,7 @@ const ImageListManager = require('./utils/ImageListManager.js');
 const TimerManager = require('./utils/TimerManager.js');
 const ImageProcessor = require('./utils/ImageProcessor.js');
 const SynologyManager = require('./utils/SynologyManager.js');
+const ImageCache = require('./utils/ImageCache.js');
 
 // the main module helper create
 module.exports = NodeHelper.create({
@@ -29,6 +30,7 @@ module.exports = NodeHelper.create({
     this.imageListManager = new ImageListManager();
     this.timerManager = new TimerManager();
     this.synologyManager = new SynologyManager();
+    this.imageCache = null; // Initialized when config is received
     this.imageProcessor = null; // Initialized when config is received
     this.config = null;
     self = this;
@@ -50,6 +52,13 @@ module.exports = NodeHelper.create({
 
     // Prepare final image list
     const finalImageList = this.imageListManager.prepareImageList(photos, config);
+
+    // Pre-load images into cache if enabled
+    if (this.imageCache && config.enableImageCache) {
+      this.imageCache.preloadImages(finalImageList, (image, callback) => {
+        this.imageProcessor.readFile(image.path, callback, image.url, this.synologyManager.getClient());
+      });
+    }
 
     // Let other modules know about slideshow images
     this.sendSocketNotification('BACKGROUNDSLIDESHOW_FILELIST', {
@@ -179,8 +188,14 @@ module.exports = NodeHelper.create({
       const config = payload;
       this.config = config;
 
-      // Initialize image processor with config
-      this.imageProcessor = new ImageProcessor(config);
+      // Initialize image cache if enabled
+      if (config.enableImageCache) {
+        this.imageCache = new ImageCache(config);
+        this.imageCache.initialize();
+      }
+
+      // Initialize image processor with config and cache
+      this.imageProcessor = new ImageProcessor(config, this.imageCache);
 
       // Get image list in a non-blocking way
       setTimeout(async () => {

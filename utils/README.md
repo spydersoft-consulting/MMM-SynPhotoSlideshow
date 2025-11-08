@@ -237,6 +237,45 @@ These modules run in Node.js and handle server-side operations.
 
 ---
 
+### ImageCache.js
+
+**Purpose:** Local disk caching of downloaded images with automatic size management
+
+**Responsibilities:**
+
+- Manages local filesystem cache for downloaded images
+- Automatically limits cache size and evicts old entries
+- Pre-loads images in background for improved performance
+- Provides cache statistics and management
+
+**Key Methods:**
+
+- `initialize()` - Initialize the cache system
+- `get(imageIdentifier)` - Retrieve image from cache
+- `set(imageIdentifier, imageData)` - Store image in cache
+- `getCacheKey(imageIdentifier)` - Generate hash key for cache lookup
+- `preloadImages(images, downloadCallback)` - Background preload images
+- `processPreloadQueue(downloadCallback)` - Process preload queue
+- `clear()` - Clear all cached images
+- `getStats()` - Get cache statistics
+
+**Configuration:**
+
+- `enableImageCache` - Enable/disable caching (default: true)
+- `imageCacheMaxSize` - Max cache size in MB (default: 500MB)
+- `imageCachePreloadCount` - Number of images to preload (default: 10)
+
+**Benefits:**
+
+- Significantly faster image display on low-CPU devices
+- Reduces network traffic for frequently shown images
+- Automatic cache management (no manual cleanup needed)
+- Background preloading prevents display lag
+
+**Usage:** Instantiated in node_helper when caching is enabled
+
+---
+
 ## Module Organization
 
 ### Frontend Flow

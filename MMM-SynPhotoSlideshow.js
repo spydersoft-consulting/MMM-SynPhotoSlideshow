@@ -29,6 +29,10 @@ Module.register('MMM-SynPhotoSlideshow', {
     synologyMaxPhotos: 1000, // Maximum number of photos to fetch from Synology
     // how often to refresh the image list from Synology, in milliseconds (default: 1 hour)
     refreshImageListInterval: 60 * 60 * 1000, // 1 hour
+    // Image caching configuration
+    enableImageCache: true, // Enable local caching of downloaded images
+    imageCacheMaxSize: 500, // Maximum cache size in MB (default: 500MB)
+    imageCachePreloadCount: 10, // Number of images to preload in background (default: 10)
     // the speed at which to switch between images, in milliseconds
     slideshowSpeed: 10 * 1000,
     // if true randomize image order, otherwise use sortImagesBy and sortImagesDescending
