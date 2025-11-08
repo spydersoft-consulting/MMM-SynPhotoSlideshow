@@ -8,6 +8,9 @@ import stylistic from '@stylistic/eslint-plugin';
 
 export default defineConfig([
   {
+    'ignores': ['coverage/**']
+  },
+  {
     'files': ['**/*.css'],
     'languageOptions': {'tolerant': true},
     'plugins': {css},
@@ -62,6 +65,62 @@ export default defineConfig([
       'max-lines-per-function': ['error', 150],
       'max-params': 'off',
       'max-statements': ['error', 100],
+      'multiline-comment-style': 'off',
+      'no-await-in-loop': 'off',
+      'no-case-declarations': 'off',
+      'no-continue': 'off',
+      'no-global-assign': 'warn',
+      'no-implicit-globals': 'warn',
+      'no-inline-comments': 'off',
+      'no-lonely-if': 'off',
+      'no-magic-numbers': 'off',
+      'no-negated-condition': 'off',
+      'no-param-reassign': 'off',
+      'no-plusplus': 'off',
+      'no-ternary': 'off',
+      'no-underscore-dangle': 'off',
+      'no-warning-comments': 'off',
+      'one-var': ['error', 'never'],
+      'require-await': 'off',
+      'sort-keys': 'off'
+    }
+  },
+  {
+    'files': ['**/*.test.js'],
+    'languageOptions': {
+      'globals': {
+        ...globals.node,
+        ...globals.jest
+      }
+    },
+    'plugins': {js,
+      stylistic},
+    'extends': [importX.recommended, 'js/all', 'stylistic/all'],
+    'rules': {
+      '@stylistic/array-element-newline': ['error', 'consistent'],
+      '@stylistic/comma-dangle': ['error', 'only-multiline'],
+      '@stylistic/function-call-argument-newline': ['error', 'consistent'],
+      '@stylistic/dot-location': ['error', 'property'],
+      '@stylistic/indent': ['error', 2],
+      '@stylistic/lines-around-comment': 'off',
+      '@stylistic/multiline-comment-style': 'off',
+      '@stylistic/padded-blocks': 'off',
+      '@stylistic/quote-props': ['error', 'as-needed'],
+      '@stylistic/quotes': ['error', 'single'],
+      'camelcase': 'off',
+      'capitalized-comments': 'off',
+      'class-methods-use-this': 'off',
+      'complexity': ['error', 35],
+      'consistent-this': 'off',
+      'curly': 'off',
+      'id-length': 'off',
+      'init-declarations': 'off',
+      'line-comment-position': 'off',
+      'max-depth': ['error', 5],
+      'max-lines': 'off',
+      'max-lines-per-function': 'off',
+      'max-params': 'off',
+      'max-statements': 'off',
       'multiline-comment-style': 'off',
       'no-await-in-loop': 'off',
       'no-case-declarations': 'off',
