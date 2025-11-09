@@ -61,10 +61,7 @@
     "testMatch": [
       "**/__tests__/**/*.js",
       "**/*.test.js"
-    ],
-    "moduleNameMapper": {
-      "^../../../js/logger.js$": "<rootDir>/__mocks__/logger.js"
-    }
+    ]
   },
   "lint-staged": {
     "*.{js,mjs,css}": [

@@ -4,6 +4,8 @@
  * Handles configuration validation and normalization
  */
 
+const Log = require('./Logger.js');
+
 class ConfigValidator {
 
   /**
@@ -16,7 +18,7 @@ class ConfigValidator {
     // Validate imageinfo property
     const imageInfoRegex = /\bname\b|\bdate\b/giu;
     if (config.showImageInfo && !imageInfoRegex.test(config.imageInfo)) {
-      Log.warn('[MMM-SynPhotoSlideshow] showImageInfo is set, but imageInfo does not have a valid value.');
+      Log.warn('showImageInfo is set, but imageInfo does not have a valid value.');
       config.imageInfo = ['name'];
     } else {
       // Convert to lower case and replace any spaces with , to make sure we get an array back

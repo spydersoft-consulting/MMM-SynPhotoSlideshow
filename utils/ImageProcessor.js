@@ -5,7 +5,7 @@
  */
 
 const sharp = require('sharp');
-const Log = require('../../../js/logger.js');
+const Log = require('./Logger.js');
 
 class ImageProcessor {
   constructor (config, imageCache = null) {
@@ -17,7 +17,7 @@ class ImageProcessor {
    * Resize image using sharp (optimized for low memory)
    */
   async resizeImage (inputPath, callback) {
-    Log.log(`[MMM-SynPhotoSlideshow] Resizing image to max: ${this.config.maxWidth}x${this.config.maxHeight}`);
+    Log.log(`Resizing image to max: ${this.config.maxWidth}x${this.config.maxHeight}`);
 
     try {
       // Use sharp's buffer mode which is more memory efficient
@@ -36,9 +36,9 @@ class ImageProcessor {
         .toBuffer();
 
       callback(`data:image/jpg;base64,${buffer.toString('base64')}`);
-      Log.log('[MMM-SynPhotoSlideshow] Resizing complete');
+      Log.log('Resizing complete');
     } catch (err) {
-      Log.error('[MMM-SynPhotoSlideshow] Error resizing image:', err);
+      Log.error('Error resizing image:', err);
       callback(null);
     }
   }
@@ -55,9 +55,9 @@ class ImageProcessor {
       const buffer = await fsPromises.readFile(filepath);
 
       callback(`data:image/${ext};base64,${buffer.toString('base64')}`);
-      Log.log('[MMM-SynPhotoSlideshow] File read complete');
+      Log.log('File read complete');
     } catch (err) {
-      Log.error('[MMM-SynPhotoSlideshow] Error reading file:', err);
+      Log.error('Error reading file:', err);
       callback(null);
     }
   }
@@ -72,19 +72,19 @@ class ImageProcessor {
         const cached = await this.imageCache.get(imageUrl);
 
         if (cached) {
-          Log.info('[MMM-SynPhotoSlideshow] Serving image from cache');
+          Log.info('Serving image from cache');
           callback(cached);
           return;
         }
       }
 
-      Log.info('[MMM-SynPhotoSlideshow] Downloading Synology image...');
+      Log.info('Downloading Synology image...');
       const imageBuffer = await synologyClient.downloadPhoto(imageUrl);
 
       if (imageBuffer) {
         const base64 = imageBuffer.toString('base64');
         const dataUrl = `data:image/jpeg;base64,${base64}`;
-        Log.info(`[MMM-SynPhotoSlideshow] Downloaded Synology image: ${imageBuffer.length} bytes`);
+        Log.info(`Downloaded Synology image: ${imageBuffer.length} bytes`);
 
         // Cache the image if caching is enabled
         if (this.imageCache && this.config.enableImageCache) {
@@ -93,11 +93,11 @@ class ImageProcessor {
 
         callback(dataUrl);
       } else {
-        Log.error('[MMM-SynPhotoSlideshow] Failed to download Synology image');
+        Log.error('Failed to download Synology image');
         callback(null);
       }
     } catch (error) {
-      Log.error(`[MMM-SynPhotoSlideshow] Error downloading Synology image: ${error.message}`);
+      Log.error(`Error downloading Synology image: ${error.message}`);
       callback(null);
     }
   }
@@ -116,7 +116,7 @@ class ImageProcessor {
     if (this.config.resizeImages) {
       await this.resizeImage(filepath, callback);
     } else {
-      Log.log('[MMM-SynPhotoSlideshow] Reading image without resizing');
+      Log.log('Reading image without resizing');
       await this.readFileRaw(filepath, callback);
     }
   }

@@ -4,7 +4,7 @@
  * Monitors memory usage and triggers cleanup when needed
  */
 
-const Log = require('../../../js/logger.js');
+const Log = require('./Logger.js');
 
 class MemoryMonitor {
   constructor (config = {}) {
@@ -24,7 +24,7 @@ class MemoryMonitor {
       return;
     }
 
-    Log.info('[MMM-SynPhotoSlideshow] Memory monitor started');
+    Log.info('Memory monitor started');
 
     this.timer = setInterval(() => {
       this.checkMemory();
@@ -41,7 +41,7 @@ class MemoryMonitor {
     if (this.timer) {
       clearInterval(this.timer);
       this.timer = null;
-      Log.info('[MMM-SynPhotoSlideshow] Memory monitor stopped');
+      Log.info('Memory monitor stopped');
     }
   }
 
@@ -61,7 +61,7 @@ class MemoryMonitor {
     const {heapTotal} = usage;
     const heapPercent = heapUsed / heapTotal;
 
-    Log.debug(`[MMM-SynPhotoSlideshow] Memory: ${(heapUsed / 1024 / 1024).toFixed(2)}MB / ${(heapTotal / 1024 / 1024).toFixed(2)}MB (${(heapPercent * 100).toFixed(1)}%)`);
+    Log.debug(`Memory: ${(heapUsed / 1024 / 1024).toFixed(2)}MB / ${(heapTotal / 1024 / 1024).toFixed(2)}MB (${(heapPercent * 100).toFixed(1)}%)`);
 
     // Trigger cleanup if memory usage is high
     if (heapPercent > this.memoryThreshold) {
@@ -69,7 +69,7 @@ class MemoryMonitor {
 
       // Only cleanup once per minute to avoid thrashing
       if (timeSinceLastCleanup > 60000) {
-        Log.warn(`[MMM-SynPhotoSlideshow] High memory usage detected (${(heapPercent * 100).toFixed(1)}%), triggering cleanup`);
+        Log.warn(`High memory usage detected (${(heapPercent * 100).toFixed(1)}%), triggering cleanup`);
         this.triggerCleanup();
         this.lastCleanup = Date.now();
       }
@@ -84,13 +84,13 @@ class MemoryMonitor {
       try {
         callback();
       } catch (error) {
-        Log.error(`[MMM-SynPhotoSlideshow] Cleanup callback error: ${error.message}`);
+        Log.error(`Cleanup callback error: ${error.message}`);
       }
     }
 
     // Force garbage collection if available (requires --expose-gc flag)
     if (global.gc) {
-      Log.info('[MMM-SynPhotoSlideshow] Running garbage collection');
+      Log.info('Running garbage collection');
       global.gc();
     }
   }

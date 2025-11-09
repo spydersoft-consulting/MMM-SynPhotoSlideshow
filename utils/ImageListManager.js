@@ -5,7 +5,7 @@
  */
 
 const FileSystem = require('node:fs');
-const Log = require('../../../js/logger.js');
+const Log = require('./Logger.js');
 
 class ImageListManager {
   constructor () {
@@ -59,20 +59,20 @@ class ImageListManager {
 
     switch (sortBy) {
       case 'created':
-        Log.debug('[MMM-SynPhotoSlideshow] Sorting by created date...');
+        Log.debug('Sorting by created date...');
         sortedList = imageList.sort(this.sortByCreated);
         break;
       case 'modified':
-        Log.debug('[MMM-SynPhotoSlideshow] Sorting by modified date...');
+        Log.debug('Sorting by modified date...');
         sortedList = imageList.sort(this.sortByModified);
         break;
       default:
-        Log.debug('[MMM-SynPhotoSlideshow] Sorting by name...');
+        Log.debug('Sorting by name...');
         sortedList = imageList.sort(this.sortByFilename);
     }
 
     if (sortDescending === true) {
-      Log.debug('[MMM-SynPhotoSlideshow] Reversing sort order...');
+      Log.debug('Reversing sort order...');
       sortedList = sortedList.reverse();
     }
 
@@ -86,10 +86,10 @@ class ImageListManager {
     try {
       const filesShown = FileSystem.readFileSync(this.trackerFilePath, 'utf8');
       const listOfShownFiles = filesShown.split(/\r?\n/u).filter((line) => line.trim() !== '');
-      Log.info(`[MMM-SynPhotoSlideshow] Found ${listOfShownFiles.length} files in tracker`);
+      Log.info(`Found ${listOfShownFiles.length} files in tracker`);
       return new Set(listOfShownFiles);
     } catch {
-      Log.info('[MMM-SynPhotoSlideshow] No tracker file found, starting fresh');
+      Log.info('No tracker file found, starting fresh');
       return new Set();
     }
   }
@@ -114,9 +114,9 @@ class ImageListManager {
     try {
       FileSystem.writeFileSync(this.trackerFilePath, '', 'utf8');
       this.alreadyShownSet.clear();
-      Log.info('[MMM-SynPhotoSlideshow] Reset shown images tracker');
+      Log.info('Reset shown images tracker');
     } catch (err) {
-      Log.error('[MMM-SynPhotoSlideshow] Error resetting tracker:', err);
+      Log.error('Error resetting tracker:', err);
     }
   }
 
@@ -136,7 +136,7 @@ class ImageListManager {
       ? this.imageList.filter((image) => !this.alreadyShownSet.has(image.path))
       : this.imageList;
 
-    Log.info(`[MMM-SynPhotoSlideshow] Skipped ${this.imageList.length - imageListToUse.length} already shown files`);
+    Log.info(`Skipped ${this.imageList.length - imageListToUse.length} already shown files`);
 
     // Randomize or sort
     let finalImageList;
@@ -153,7 +153,7 @@ class ImageListManager {
     this.imageList = finalImageList;
     this.index = 0;
 
-    Log.info(`[MMM-SynPhotoSlideshow] Final image list contains ${this.imageList.length} files`);
+    Log.info(`Final image list contains ${this.imageList.length} files`);
     return this.imageList;
   }
 
@@ -167,12 +167,12 @@ class ImageListManager {
 
     // Loop back to beginning if reached the end
     if (this.index >= this.imageList.length) {
-      Log.info('[MMM-SynPhotoSlideshow] Reached end of list, looping to beginning');
+      Log.info('Reached end of list, looping to beginning');
       this.index = 0;
     }
 
     const image = this.imageList[this.index++];
-    Log.info(`[MMM-SynPhotoSlideshow] Displaying image ${this.index}/${this.imageList.length}: "${image.path}"`);
+    Log.info(`Displaying image ${this.index}/${this.imageList.length}: "${image.path}"`);
 
     return image;
   }

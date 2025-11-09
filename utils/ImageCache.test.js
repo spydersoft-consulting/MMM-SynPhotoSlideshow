@@ -8,12 +8,7 @@ const fsPromises = require('node:fs/promises');
 const crypto = require('node:crypto');
 
 // Mock the logger module
-jest.mock('../../../js/logger.js', () => ({
-  info: jest.fn(),
-  error: jest.fn(),
-  warn: jest.fn(),
-  debug: jest.fn()
-}));
+jest.mock('./Logger.js');
 
 // Mock node-cache
 jest.mock('node-cache');
@@ -24,7 +19,7 @@ jest.mock('node:fs/promises');
 
 // Import after mocks
 const ImageCache = require('./ImageCache');
-const Log = require('../../../js/logger.js');
+const Log = require('./Logger.js');
 
 describe('ImageCache', () => {
   let imageCache;

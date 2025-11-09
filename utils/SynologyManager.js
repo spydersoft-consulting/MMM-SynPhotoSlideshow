@@ -4,7 +4,7 @@
  * Manages Synology Photos integration
  */
 
-const Log = require('../../../js/logger.js');
+const Log = require('./Logger.js');
 const SynologyPhotosClient = require('./SynologyPhotosClient.js');
 
 class SynologyManager {
@@ -18,14 +18,14 @@ class SynologyManager {
    */
   async fetchPhotos (config) {
     try {
-      Log.info('[MMM-SynPhotoSlideshow] Initializing Synology Photos client...');
+      Log.info('Initializing Synology Photos client...');
 
       this.client = new SynologyPhotosClient(config);
 
       // Authenticate (if not using shared album)
       const authenticated = await this.client.authenticate();
       if (!authenticated && !config.synologyShareToken) {
-        Log.error('[MMM-SynPhotoSlideshow] Failed to authenticate with Synology');
+        Log.error('Failed to authenticate with Synology');
         return [];
       }
 
@@ -33,7 +33,7 @@ class SynologyManager {
       if (config.synologyTagNames && config.synologyTagNames.length > 0) {
         const tagsFound = await this.client.findTags();
         if (!tagsFound) {
-          Log.error('[MMM-SynPhotoSlideshow] Failed to find Synology tags');
+          Log.error('Failed to find Synology tags');
           return [];
         }
       }
@@ -44,7 +44,7 @@ class SynologyManager {
         (!config.synologyTagNames || config.synologyTagNames.length === 0)) {
         const albumFound = await this.client.findAlbum();
         if (!albumFound) {
-          Log.error('[MMM-SynPhotoSlideshow] Failed to find Synology album');
+          Log.error('Failed to find Synology album');
           return [];
         }
       }
@@ -53,14 +53,14 @@ class SynologyManager {
       const photos = await this.client.fetchPhotos();
 
       if (photos && photos.length > 0) {
-        Log.info(`[MMM-SynPhotoSlideshow] Retrieved ${photos.length} photos from Synology`);
+        Log.info(`Retrieved ${photos.length} photos from Synology`);
         this.photos = photos;
         return photos;
       }
-      Log.warn('[MMM-SynPhotoSlideshow] No photos found in Synology');
+      Log.warn('No photos found in Synology');
       return [];
     } catch (error) {
-      Log.error(`[MMM-SynPhotoSlideshow] Error fetching Synology photos: ${error.message}`);
+      Log.error(`Error fetching Synology photos: ${error.message}`);
       return [];
     }
   }

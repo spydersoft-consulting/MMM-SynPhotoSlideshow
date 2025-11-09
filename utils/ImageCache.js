@@ -7,7 +7,7 @@
 const NodeCache = require('node-cache');
 const fsPromises = require('node:fs/promises');
 const path = require('node:path');
-const Log = require('../../../js/logger.js');
+const Log = require('./Logger.js');
 const crypto = require('node:crypto');
 
 class ImageCache {
@@ -53,10 +53,10 @@ class ImageCache {
       // Calculate current cache size asynchronously
       await this.calculateCacheSize();
 
-      Log.info(`[MMM-SynPhotoSlideshow] Image cache initialized at ${this.cacheDir} with max size ${maxSizeMB}MB`);
+      Log.info(`Image cache initialized at ${this.cacheDir} with max size ${maxSizeMB}MB`);
       return true;
     } catch (error) {
-      Log.error(`[MMM-SynPhotoSlideshow] Failed to initialize image cache: ${error.message}`);
+      Log.error(`Failed to initialize image cache: ${error.message}`);
       return false;
     }
   }
@@ -95,9 +95,9 @@ class ImageCache {
       }
 
       this.currentCacheSize = totalSize;
-      Log.debug(`[MMM-SynPhotoSlideshow] Current cache size: ${(totalSize / 1024 / 1024).toFixed(2)}MB`);
+      Log.debug(`Current cache size: ${(totalSize / 1024 / 1024).toFixed(2)}MB`);
     } catch (error) {
-      Log.error(`[MMM-SynPhotoSlideshow] Error calculating cache size: ${error.message}`);
+      Log.error(`Error calculating cache size: ${error.message}`);
       this.currentCacheSize = 0;
     }
   }
@@ -151,14 +151,14 @@ class ImageCache {
           await fsPromises.unlink(file.path);
           this.cache.del(file.name);
           this.currentCacheSize -= file.size;
-          Log.debug(`[MMM-SynPhotoSlideshow] Evicted ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+          Log.debug(`Evicted ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
         } catch (error) {
           // File might have been deleted already
-          Log.debug(`[MMM-SynPhotoSlideshow] Could not evict ${file.name}: ${error.message}`);
+          Log.debug(`Could not evict ${file.name}: ${error.message}`);
         }
       }
     } catch (error) {
-      Log.error(`[MMM-SynPhotoSlideshow] Error evicting files: ${error.message}`);
+      Log.error(`Error evicting files: ${error.message}`);
     }
   }
 
@@ -189,12 +189,12 @@ class ImageCache {
         const filePath = path.join(this.cacheDir, key);
         try {
           const data = await fsPromises.readFile(filePath, 'utf8');
-          Log.debug(`[MMM-SynPhotoSlideshow] Cache hit for ${imageIdentifier}`);
+          Log.debug(`Cache hit for ${imageIdentifier}`);
           return data;
         } catch {
           // File was deleted, remove from cache
           this.cache.del(key);
-          Log.debug(`[MMM-SynPhotoSlideshow] Cache file missing for ${imageIdentifier}`);
+          Log.debug(`Cache file missing for ${imageIdentifier}`);
           return null;
         }
       }
@@ -207,14 +207,14 @@ class ImageCache {
         const data = await fsPromises.readFile(filePath, 'utf8');
         // Store metadata in memory (not the full image)
         this.cache.set(key, true);
-        Log.debug(`[MMM-SynPhotoSlideshow] Disk cache hit for ${imageIdentifier}`);
+        Log.debug(`Disk cache hit for ${imageIdentifier}`);
         return data;
       } catch {
-        Log.debug(`[MMM-SynPhotoSlideshow] Cache miss for ${imageIdentifier}`);
+        Log.debug(`Cache miss for ${imageIdentifier}`);
         return null;
       }
     } catch (error) {
-      Log.error(`[MMM-SynPhotoSlideshow] Error getting from cache: ${error.message}`);
+      Log.error(`Error getting from cache: ${error.message}`);
       return null;
     }
   }
@@ -248,10 +248,10 @@ class ImageCache {
         });
       }
 
-      Log.debug(`[MMM-SynPhotoSlideshow] Cached image ${imageIdentifier} (${(dataSize / 1024 / 1024).toFixed(2)}MB)`);
+      Log.debug(`Cached image ${imageIdentifier} (${(dataSize / 1024 / 1024).toFixed(2)}MB)`);
       return true;
     } catch (error) {
-      Log.error(`[MMM-SynPhotoSlideshow] Error setting cache: ${error.message}`);
+      Log.error(`Error setting cache: ${error.message}`);
       return false;
     }
   }
@@ -267,11 +267,11 @@ class ImageCache {
     // Add images to preload queue
     this.preloadQueue = images.filter((img) => img.isSynology).slice(0, this.config.imageCachePreloadCount || 10);
 
-    Log.info(`[MMM-SynPhotoSlideshow] Starting background preload of ${this.preloadQueue.length} images`);
+    Log.info(`Starting background preload of ${this.preloadQueue.length} images`);
 
     // Start preloading in background (non-blocking)
     this.processPreloadQueue(downloadCallback).catch((error) => {
-      Log.error(`[MMM-SynPhotoSlideshow] Preload queue error: ${error.message}`);
+      Log.error(`Preload queue error: ${error.message}`);
     });
   }
 
@@ -304,7 +304,7 @@ class ImageCache {
               clearTimeout(timeout);
               if (imageData) {
                 await this.set(image.url || image.path, imageData);
-                Log.debug(`[MMM-SynPhotoSlideshow] Preloaded and cached: ${image.path}`);
+                Log.debug(`Preloaded and cached: ${image.path}`);
               }
 
               resolve();
@@ -316,16 +316,16 @@ class ImageCache {
             setTimeout(resolve, this.preloadDelay);
           });
         } catch (error) {
-          Log.error(`[MMM-SynPhotoSlideshow] Error preloading image: ${error.message}`);
+          Log.error(`Error preloading image: ${error.message}`);
           // Continue with next image
         }
       } else {
-        Log.debug(`[MMM-SynPhotoSlideshow] Skipping preload, already cached: ${image.path}`);
+        Log.debug(`Skipping preload, already cached: ${image.path}`);
       }
     }
 
     this.isPreloading = false;
-    Log.info('[MMM-SynPhotoSlideshow] Background preload complete');
+    Log.info('Background preload complete');
   }
 
   /**
@@ -364,9 +364,9 @@ class ImageCache {
       }
 
       this.currentCacheSize = 0;
-      Log.info('[MMM-SynPhotoSlideshow] Cache cleared');
+      Log.info('Cache cleared');
     } catch (error) {
-      Log.error(`[MMM-SynPhotoSlideshow] Error clearing cache: ${error.message}`);
+      Log.error(`Error clearing cache: ${error.message}`);
     }
   }
 
@@ -386,7 +386,7 @@ class ImageCache {
         preloadCount: this.config.imageCachePreloadCount || 10,
       };
     } catch (error) {
-      Log.error(`[MMM-SynPhotoSlideshow] Error getting cache stats: ${error.message}`);
+      Log.error(`Error getting cache stats: ${error.message}`);
       return null;
     }
   }

@@ -13,7 +13,7 @@
 
 const {exec} = require('node:child_process');
 const NodeHelper = require('node_helper');
-const Log = require('../../js/logger.js');
+const Log = require('./utils/Logger.js');
 
 // Import utility modules
 const ImageListManager = require('./utils/ImageListManager.js');

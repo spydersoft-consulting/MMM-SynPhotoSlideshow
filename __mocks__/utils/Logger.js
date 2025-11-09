@@ -1,12 +1,13 @@
 /**
- * Mock for MagicMirror logger
- * Used in testing environment
+ * Mock Logger for testing
  */
 
-module.exports = {
+const logger = {
   info: jest.fn(),
   error: jest.fn(),
   warn: jest.fn(),
   debug: jest.fn(),
   log: jest.fn()
 };
+
+module.exports = logger;

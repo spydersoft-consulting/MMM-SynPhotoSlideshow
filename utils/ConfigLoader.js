@@ -5,7 +5,7 @@
  */
 
 const path = require('node:path');
-const Log = require('../../../js/logger.js');
+const Log = require('./Logger.js');
 
 class ConfigLoader {
   /**
@@ -17,28 +17,28 @@ class ConfigLoader {
       const envPath = path.join(__dirname, '..', '.env');
       const fs = require('node:fs');
 
-      Log.info(`[MMM-SynPhotoSlideshow] Looking for .env file at: ${envPath}`);
+      Log.info(`Looking for .env file at: ${envPath}`);
 
       // Check if file exists
       if (fs.existsSync(envPath)) {
-        Log.info('[MMM-SynPhotoSlideshow] .env file found, loading...');
+        Log.info('.env file found, loading...');
         const result = dotenv.config({path: envPath});
 
         if (result.error) {
-          Log.error(`[MMM-SynPhotoSlideshow] Error loading .env file: ${result.error.message}`);
+          Log.error(`Error loading .env file: ${result.error.message}`);
         } else {
-          Log.info('[MMM-SynPhotoSlideshow] Successfully loaded configuration from .env file');
+          Log.info('Successfully loaded configuration from .env file');
           // Log which variables were loaded (without exposing values)
           const loadedVars = Object.keys(result.parsed || {}).join(', ');
           if (loadedVars) {
-            Log.info(`[MMM-SynPhotoSlideshow] Loaded variables: ${loadedVars}`);
+            Log.info(`Loaded variables: ${loadedVars}`);
           }
         }
       } else {
-        Log.info('[MMM-SynPhotoSlideshow] .env file not found, using config.js values only');
+        Log.info('.env file not found, using config.js values only');
       }
     } catch (error) {
-      Log.error(`[MMM-SynPhotoSlideshow] Error in loadEnv: ${error.message}`);
+      Log.error(`Error in loadEnv: ${error.message}`);
     }
   }
 
@@ -146,8 +146,8 @@ class ConfigLoader {
    * Initialize and merge configuration
    */
   static initialize (config) {
-    Log.info('[MMM-SynPhotoSlideshow] Initializing configuration...');
-    Log.info(`[MMM-SynPhotoSlideshow] Config received from config.js: ${JSON.stringify(Object.keys(config))}`);
+    Log.info('Initializing configuration...');
+    Log.info(`Config received from config.js: ${JSON.stringify(Object.keys(config))}`);
 
     // Load .env file if it exists
     this.loadEnv();
@@ -174,11 +174,11 @@ class ConfigLoader {
     }
 
     if (envOverrides.length > 0) {
-      Log.info(`[MMM-SynPhotoSlideshow] Using environment variables: ${envOverrides.join(', ')}`);
+      Log.info(`Using environment variables: ${envOverrides.join(', ')}`);
     }
 
     // Log final config keys (not values)
-    Log.info(`[MMM-SynPhotoSlideshow] Final merged config keys: ${JSON.stringify(Object.keys(mergedConfig))}`);
+    Log.info(`Final merged config keys: ${JSON.stringify(Object.keys(mergedConfig))}`);
 
     // Perform comprehensive validation
     this.validateConfig(mergedConfig);
@@ -194,8 +194,8 @@ class ConfigLoader {
 
     // Check required: synologyUrl
     if (!config.synologyUrl) {
-      Log.error('[MMM-SynPhotoSlideshow] ERROR: synologyUrl is required!');
-      Log.error('[MMM-SynPhotoSlideshow]   Set it in config.js or SYNOLOGY_URL in .env');
+      Log.error('ERROR: synologyUrl is required!');
+      Log.error('  Set it in config.js or SYNOLOGY_URL in .env');
       hasErrors = true;
     }
 
@@ -204,35 +204,35 @@ class ConfigLoader {
     const hasShareToken = config.synologyShareToken;
 
     if (!hasCredentials && !hasShareToken) {
-      Log.error('[MMM-SynPhotoSlideshow] ERROR: Authentication is required!');
-      Log.error('[MMM-SynPhotoSlideshow]   Option 1: Set synologyAccount + synologyPassword in config.js');
-      Log.error('[MMM-SynPhotoSlideshow]             OR SYNOLOGY_ACCOUNT + SYNOLOGY_PASSWORD in .env');
-      Log.error('[MMM-SynPhotoSlideshow]   Option 2: Set synologyShareToken in config.js');
-      Log.error('[MMM-SynPhotoSlideshow]             OR SYNOLOGY_SHARE_TOKEN in .env');
+      Log.error('ERROR: Authentication is required!');
+      Log.error('  Option 1: Set synologyAccount + synologyPassword in config.js');
+      Log.error('            OR SYNOLOGY_ACCOUNT + SYNOLOGY_PASSWORD in .env');
+      Log.error('  Option 2: Set synologyShareToken in config.js');
+      Log.error('            OR SYNOLOGY_SHARE_TOKEN in .env');
       hasErrors = true;
     }
 
     // Warn about common issues
     if (config.synologyUrl && !config.synologyUrl.startsWith('http')) {
-      Log.warn('[MMM-SynPhotoSlideshow] WARNING: synologyUrl should start with http:// or https://');
-      Log.warn(`[MMM-SynPhotoSlideshow]   Current value: ${config.synologyUrl}`);
+      Log.warn('WARNING: synologyUrl should start with http:// or https://');
+      Log.warn(`  Current value: ${config.synologyUrl}`);
     }
 
     // Log configuration summary
     if (!hasErrors) {
-      Log.info('[MMM-SynPhotoSlideshow] Configuration validated successfully');
-      Log.info(`[MMM-SynPhotoSlideshow]   URL: ${config.synologyUrl}`);
-      Log.info(`[MMM-SynPhotoSlideshow]   Auth: ${hasShareToken
+      Log.info('Configuration validated successfully');
+      Log.info(`  URL: ${config.synologyUrl}`);
+      Log.info(`  Auth: ${hasShareToken
         ? 'Share Token'
         : 'Account Credentials'}`);
       if (config.synologyAlbumName) {
-        Log.info(`[MMM-SynPhotoSlideshow]   Album: ${config.synologyAlbumName}`);
+        Log.info(`  Album: ${config.synologyAlbumName}`);
       }
       if (config.synologyTagNames && config.synologyTagNames.length > 0) {
-        Log.info(`[MMM-SynPhotoSlideshow]   Tags: ${config.synologyTagNames.join(', ')}`);
+        Log.info(`  Tags: ${config.synologyTagNames.join(', ')}`);
       }
     } else {
-      Log.error('[MMM-SynPhotoSlideshow] Configuration validation FAILED - module will not work correctly!');
+      Log.error('Configuration validation FAILED - module will not work correctly!');
     }
 
     return !hasErrors;

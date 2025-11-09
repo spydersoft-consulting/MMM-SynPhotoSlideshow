@@ -8,13 +8,8 @@ const fs = require('node:fs');
 const ConfigLoader = require('./ConfigLoader');
 
 // Mock the logger
-jest.mock('../../../js/logger.js', () => ({
-  info: jest.fn(),
-  error: jest.fn(),
-  warn: jest.fn()
-}));
-
-const Log = require('../../../js/logger.js');
+jest.mock('./Logger.js');
+const Log = require('./Logger.js');
 
 describe('ConfigLoader', () => {
   let originalEnv;

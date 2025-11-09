@@ -9,7 +9,7 @@
  */
 
 const axios = require('axios');
-const Log = require('../../../js/logger.js');
+const Log = require('./Logger.js');
 
 class SynologyPhotosClient {
   constructor (config) {
@@ -35,7 +35,7 @@ class SynologyPhotosClient {
    */
   async authenticate () {
     if (this.useSharedAlbum) {
-      Log.info('[MMM-SynPhotoSlideshow] Using shared album token, skipping authentication');
+      Log.info('Using shared album token, skipping authentication');
       return true;
     }
 
@@ -55,13 +55,13 @@ class SynologyPhotosClient {
 
       if (response.data.success) {
         this.sid = response.data.data.sid;
-        Log.info('[MMM-SynPhotoSlideshow] Successfully authenticated with Synology');
+        Log.info('Successfully authenticated with Synology');
         return true;
       }
-      Log.error(`[MMM-SynPhotoSlideshow] Synology authentication failed: ${JSON.stringify(response.data)}`);
+      Log.error(`Synology authentication failed: ${JSON.stringify(response.data)}`);
       return false;
     } catch (error) {
-      Log.error(`[MMM-SynPhotoSlideshow] Synology authentication error: ${error.message}`);
+      Log.error(`Synology authentication error: ${error.message}`);
       return false;
     }
   }
@@ -71,7 +71,7 @@ class SynologyPhotosClient {
    */
   async findAlbum () {
     if (this.useSharedAlbum) {
-      Log.info('[MMM-SynPhotoSlideshow] Using shared album, skipping album search');
+      Log.info('Using shared album, skipping album search');
       return true;
     }
 
@@ -93,7 +93,7 @@ class SynologyPhotosClient {
 
         if (!this.albumName) {
           // If no album name specified, get all albums
-          Log.info(`[MMM-SynPhotoSlideshow] Found ${albums.length} albums, will fetch from all`);
+          Log.info(`Found ${albums.length} albums, will fetch from all`);
           this.folderIds = albums.map((album) => album.id);
           return true;
         }
@@ -101,17 +101,17 @@ class SynologyPhotosClient {
         const targetAlbum = albums.find((album) => album.name.toLowerCase() === this.albumName.toLowerCase());
 
         if (targetAlbum) {
-          Log.info(`[MMM-SynPhotoSlideshow] Found album: ${targetAlbum.name}`);
+          Log.info(`Found album: ${targetAlbum.name}`);
           this.folderIds = [targetAlbum.id];
           return true;
         }
-        Log.warn(`[MMM-SynPhotoSlideshow] Album "${this.albumName}" not found. Available albums: ${albums.map((a) => a.name).join(', ')}`);
+        Log.warn(`Album "${this.albumName}" not found. Available albums: ${albums.map((a) => a.name).join(', ')}`);
         return false;
       }
-      Log.error(`[MMM-SynPhotoSlideshow] Failed to list albums: ${JSON.stringify(response.data)}`);
+      Log.error(`Failed to list albums: ${JSON.stringify(response.data)}`);
       return false;
     } catch (error) {
-      Log.error(`[MMM-SynPhotoSlideshow] Error listing albums: ${error.message}`);
+      Log.error(`Error listing albums: ${error.message}`);
       return false;
     }
   }
@@ -138,7 +138,7 @@ class SynologyPhotosClient {
           passphrase: this.shareToken
         };
 
-        Log.info('[MMM-SynPhotoSlideshow] Fetching tags from shared album');
+        Log.info('Fetching tags from shared album');
 
         const response = await axios.get(`${this.baseUrl}${this.photosApiPath}`, {
           params,
@@ -152,13 +152,13 @@ class SynologyPhotosClient {
 
           if (matchedTags.length > 0) {
             this.tagIds.shared = matchedTags.map((tag) => tag.id);
-            Log.info(`[MMM-SynPhotoSlideshow] Found ${matchedTags.length} matching tags in shared album: ${matchedTags.map((t) => t.name).join(', ')}`);
+            Log.info(`Found ${matchedTags.length} matching tags in shared album: ${matchedTags.map((t) => t.name).join(', ')}`);
             return true;
           }
-          Log.warn(`[MMM-SynPhotoSlideshow] No matching tags found for: ${this.tagNames.join(', ')}`);
+          Log.warn(`No matching tags found for: ${this.tagNames.join(', ')}`);
           return false;
         }
-        Log.error(`[MMM-SynPhotoSlideshow] Failed to list tags: ${JSON.stringify(response.data)}`);
+        Log.error(`Failed to list tags: ${JSON.stringify(response.data)}`);
         return false;
       }
       const spaces = [
@@ -199,25 +199,25 @@ class SynologyPhotosClient {
 
             if (matchedTags.length > 0) {
               this.tagIds[space.id] = matchedTags.map((tag) => tag.id);
-              Log.info(`[MMM-SynPhotoSlideshow] Found ${matchedTags.length} tag(s) in ${space.name} space: ${matchedTags.map((t) => `${t.name}(${t.id})`).join(', ')}`);
+              Log.info(`Found ${matchedTags.length} tag(s) in ${space.name} space: ${matchedTags.map((t) => `${t.name}(${t.id})`).join(', ')}`);
               foundAnyTags = true;
             }
           } else {
-            Log.warn(`[MMM-SynPhotoSlideshow] Failed to list tags in ${space.name} space`);
+            Log.warn(`Failed to list tags in ${space.name} space`);
           }
         } catch (error) {
-          Log.warn(`[MMM-SynPhotoSlideshow] Error fetching tags from ${space.name} space: ${error.message}`);
+          Log.warn(`Error fetching tags from ${space.name} space: ${error.message}`);
         }
       }
 
       if (!foundAnyTags) {
-        Log.warn(`[MMM-SynPhotoSlideshow] No matching tags found for: ${this.tagNames.join(', ')}`);
+        Log.warn(`No matching tags found for: ${this.tagNames.join(', ')}`);
         return false;
       }
 
       return true;
     } catch (error) {
-      Log.error(`[MMM-SynPhotoSlideshow] Error listing tags: ${error.message}`);
+      Log.error(`Error listing tags: ${error.message}`);
       return false;
     }
   }
@@ -262,10 +262,10 @@ class SynologyPhotosClient {
         }
       }
 
-      Log.info(`[MMM-SynPhotoSlideshow] Fetched ${photos.length} photos from Synology Photos`);
+      Log.info(`Fetched ${photos.length} photos from Synology Photos`);
       return photos;
     } catch (error) {
-      Log.error(`[MMM-SynPhotoSlideshow] Error fetching photos: ${error.message}`);
+      Log.error(`Error fetching photos: ${error.message}`);
       return [];
     }
   }
@@ -291,10 +291,10 @@ class SynologyPhotosClient {
       if (response.data.success) {
         return this.processPhotoList(response.data.data.list);
       }
-      Log.error(`[MMM-SynPhotoSlideshow] Failed to fetch shared album photos: ${JSON.stringify(response.data)}`);
+      Log.error(`Failed to fetch shared album photos: ${JSON.stringify(response.data)}`);
       return [];
     } catch (error) {
-      Log.error(`[MMM-SynPhotoSlideshow] Error fetching shared album photos: ${error.message}`);
+      Log.error(`Error fetching shared album photos: ${error.message}`);
       return [];
     }
   }
@@ -320,10 +320,10 @@ class SynologyPhotosClient {
       if (response.data.success) {
         return this.processPhotoList(response.data.data.list);
       }
-      Log.error(`[MMM-SynPhotoSlideshow] Failed to fetch all photos: ${JSON.stringify(response.data)}`);
+      Log.error(`Failed to fetch all photos: ${JSON.stringify(response.data)}`);
       return [];
     } catch (error) {
-      Log.error(`[MMM-SynPhotoSlideshow] Error fetching all photos: ${error.message}`);
+      Log.error(`Error fetching all photos: ${error.message}`);
       return [];
     }
   }
@@ -350,10 +350,10 @@ class SynologyPhotosClient {
       if (response.data.success) {
         return this.processPhotoList(response.data.data.list);
       }
-      Log.error(`[MMM-SynPhotoSlideshow] Failed to fetch album photos: ${JSON.stringify(response.data)}`);
+      Log.error(`Failed to fetch album photos: ${JSON.stringify(response.data)}`);
       return [];
     } catch (error) {
-      Log.error(`[MMM-SynPhotoSlideshow] Error fetching album photos: ${error.message}`);
+      Log.error(`Error fetching album photos: ${error.message}`);
       return [];
     }
   }
@@ -398,7 +398,7 @@ class SynologyPhotosClient {
       }
       return [];
     } catch (error) {
-      Log.error(`[MMM-SynPhotoSlideshow] Error fetching photos by tag from space ${spaceId}: ${error.message}`);
+      Log.error(`Error fetching photos by tag from space ${spaceId}: ${error.message}`);
       return [];
     }
   }
@@ -490,7 +490,7 @@ class SynologyPhotosClient {
 
       return Buffer.from(response.data, 'binary');
     } catch (error) {
-      Log.error(`[MMM-SynPhotoSlideshow] Error downloading photo: ${error.message}`);
+      Log.error(`Error downloading photo: ${error.message}`);
       return null;
     }
   }
@@ -514,9 +514,9 @@ class SynologyPhotosClient {
         },
         timeout: 5000
       });
-      Log.info('[MMM-SynPhotoSlideshow] Logged out from Synology');
+      Log.info('Logged out from Synology');
     } catch (error) {
-      Log.error(`[MMM-SynPhotoSlideshow] Error logging out: ${error.message}`);
+      Log.error(`Error logging out: ${error.message}`);
     }
   }
 }
