@@ -1,5 +1,9 @@
 # MMM-SynPhotoSlideshow
 
+[![PR Checks](https://github.com/spydersoft-consulting/MMM-SynPhotoSlideshow/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/spydersoft-consulting/MMM-SynPhotoSlideshow/actions/workflows/pr-checks.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=spydersoft-consulting_MMM-SynPhotoSlideshow&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=spydersoft-consulting_MMM-SynPhotoSlideshow)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=spydersoft-consulting_MMM-SynPhotoSlideshow&metric=coverage)](https://sonarcloud.io/summary/new_code?id=spydersoft-consulting_MMM-SynPhotoSlideshow)
+
 Display a full-screen slideshow of photos from your Synology Photos library on [MagicMirror²](https://magicmirror.builders/). Perfect for creating a dynamic photo frame!
 
 The `MMM-SynPhotoSlideshow` module connects directly to your Synology DiskStation's Photos app to display images fullscreen, one at a time on a fixed interval. Images can be shown in order or at random, with smooth transitions and various display options.
