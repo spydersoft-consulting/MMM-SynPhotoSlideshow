@@ -8,7 +8,7 @@ import stylistic from '@stylistic/eslint-plugin';
 
 export default defineConfig([
   {
-    'ignores': ['coverage/**']
+    'ignores': ['coverage/**', '__mocks__/**']
   },
   {
     'files': ['**/*.css'],
