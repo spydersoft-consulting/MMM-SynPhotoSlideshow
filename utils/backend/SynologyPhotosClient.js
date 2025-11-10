@@ -195,7 +195,8 @@ class SynologyPhotosClient {
     }
 
     this.tagIds[space.id] = matchedTags.map((tag) => tag.id);
-    Log.info(`Found ${matchedTags.length} tag(s) in ${space.name} space: ${matchedTags.map((t) => `${t.name}(${t.id})`).join(', ')}`);
+    const tagDescriptions = matchedTags.map((t) => `${t.name}(${t.id})`).join(', ');
+    Log.info(`Found ${matchedTags.length} tag(s) in ${space.name} space: ${tagDescriptions}`);
     return true;
   }
 
@@ -502,15 +503,16 @@ class SynologyPhotosClient {
    */
   getPhotoUrl (photoId, cacheKey, spaceId = null) {
     let url;
+    const quotedCacheKey = `"${cacheKey}"`;
 
     if (this.useSharedAlbum) {
-      url = `${this.baseUrl}${this.photosApiPath}?api=SYNO.Foto.Thumbnail&version=2&method=get&id=${photoId}&cache_key="${cacheKey}"&type="unit"&size="xl"&passphrase=${this.shareToken}`;
+      url = `${this.baseUrl}${this.photosApiPath}?api=SYNO.Foto.Thumbnail&version=2&method=get&id=${photoId}&cache_key=${quotedCacheKey}&type="unit"&size="xl"&passphrase=${this.shareToken}`;
     } else {
       // Use FotoTeam API for shared space photos (space_id 1)
       const api = spaceId === 1
         ? 'SYNO.FotoTeam.Thumbnail'
         : 'SYNO.Foto.Thumbnail';
-      url = `${this.baseUrl}${this.photosApiPath}?api=${api}&version=2&method=get&id=${photoId}&cache_key="${cacheKey}"&type="unit"&size="xl"&_sid=${this.sid}`;
+      url = `${this.baseUrl}${this.photosApiPath}?api=${api}&version=2&method=get&id=${photoId}&cache_key=${quotedCacheKey}&type="unit"&size="xl"&_sid=${this.sid}`;
 
       // Only add space_id for personal space (0)
       if (spaceId === 0) {
