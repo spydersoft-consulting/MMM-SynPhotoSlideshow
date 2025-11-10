@@ -5,6 +5,7 @@
  * Module: MMM-SynPhotoSlideshow
  *
  * Synology Photos API client for fetching images
+ * By Spydersoft Consulting
  * MIT Licensed.
  */
 
