@@ -45,6 +45,42 @@ class ConfigLoader {
   }
 
   /**
+   * Helper: Set string value from environment variable
+   */
+  static setStringFromEnv (merged, envKey, configKey) {
+    if (process.env[envKey]) {
+      merged[configKey] = process.env[envKey];
+    }
+  }
+
+  /**
+   * Helper: Set integer value from environment variable
+   */
+  static setIntFromEnv (merged, envKey, configKey) {
+    if (process.env[envKey]) {
+      merged[configKey] = Number.parseInt(process.env[envKey], 10);
+    }
+  }
+
+  /**
+   * Helper: Set float value from environment variable
+   */
+  static setFloatFromEnv (merged, envKey, configKey) {
+    if (process.env[envKey]) {
+      merged[configKey] = Number.parseFloat(process.env[envKey]);
+    }
+  }
+
+  /**
+   * Helper: Set boolean value from environment variable
+   */
+  static setBoolFromEnv (merged, envKey, configKey) {
+    if (process.env[envKey] !== undefined) {
+      merged[configKey] = process.env[envKey] === 'true';
+    }
+  }
+
+  /**
    * Merge environment variables with config
    * Environment variables take precedence over config values
    */
@@ -52,25 +88,11 @@ class ConfigLoader {
     const merged = {...config};
 
     // Synology connection settings
-    if (process.env.SYNOLOGY_URL) {
-      merged.synologyUrl = process.env.SYNOLOGY_URL;
-    }
-
-    if (process.env.SYNOLOGY_ACCOUNT) {
-      merged.synologyAccount = process.env.SYNOLOGY_ACCOUNT;
-    }
-
-    if (process.env.SYNOLOGY_PASSWORD) {
-      merged.synologyPassword = process.env.SYNOLOGY_PASSWORD;
-    }
-
-    if (process.env.SYNOLOGY_ALBUM_NAME) {
-      merged.synologyAlbumName = process.env.SYNOLOGY_ALBUM_NAME;
-    }
-
-    if (process.env.SYNOLOGY_SHARE_TOKEN) {
-      merged.synologyShareToken = process.env.SYNOLOGY_SHARE_TOKEN;
-    }
+    this.setStringFromEnv(merged, 'SYNOLOGY_URL', 'synologyUrl');
+    this.setStringFromEnv(merged, 'SYNOLOGY_ACCOUNT', 'synologyAccount');
+    this.setStringFromEnv(merged, 'SYNOLOGY_PASSWORD', 'synologyPassword');
+    this.setStringFromEnv(merged, 'SYNOLOGY_ALBUM_NAME', 'synologyAlbumName');
+    this.setStringFromEnv(merged, 'SYNOLOGY_SHARE_TOKEN', 'synologyShareToken');
 
     // Tag names (comma-separated)
     if (process.env.SYNOLOGY_TAG_NAMES) {
@@ -78,68 +100,29 @@ class ConfigLoader {
     }
 
     // Numeric settings
-    if (process.env.SYNOLOGY_MAX_PHOTOS) {
-      merged.synologyMaxPhotos = Number.parseInt(process.env.SYNOLOGY_MAX_PHOTOS, 10);
-    }
-
-    if (process.env.SLIDESHOW_SPEED) {
-      merged.slideshowSpeed = Number.parseInt(process.env.SLIDESHOW_SPEED, 10);
-    }
-
-    if (process.env.REFRESH_IMAGE_LIST_INTERVAL) {
-      merged.refreshImageListInterval = Number.parseInt(process.env.REFRESH_IMAGE_LIST_INTERVAL, 10);
-    }
+    this.setIntFromEnv(merged, 'SYNOLOGY_MAX_PHOTOS', 'synologyMaxPhotos');
+    this.setIntFromEnv(merged, 'SLIDESHOW_SPEED', 'slideshowSpeed');
+    this.setIntFromEnv(merged, 'REFRESH_IMAGE_LIST_INTERVAL', 'refreshImageListInterval');
 
     // Cache settings
-    if (process.env.ENABLE_IMAGE_CACHE !== undefined) {
-      merged.enableImageCache = process.env.ENABLE_IMAGE_CACHE === 'true';
-    }
-
-    if (process.env.IMAGE_CACHE_MAX_SIZE) {
-      merged.imageCacheMaxSize = Number.parseInt(process.env.IMAGE_CACHE_MAX_SIZE, 10);
-    }
-
-    if (process.env.IMAGE_CACHE_PRELOAD_COUNT) {
-      merged.imageCachePreloadCount = Number.parseInt(process.env.IMAGE_CACHE_PRELOAD_COUNT, 10);
-    }
-
-    if (process.env.IMAGE_CACHE_PRELOAD_DELAY) {
-      merged.imageCachePreloadDelay = Number.parseInt(process.env.IMAGE_CACHE_PRELOAD_DELAY, 10);
-    }
+    this.setBoolFromEnv(merged, 'ENABLE_IMAGE_CACHE', 'enableImageCache');
+    this.setIntFromEnv(merged, 'IMAGE_CACHE_MAX_SIZE', 'imageCacheMaxSize');
+    this.setIntFromEnv(merged, 'IMAGE_CACHE_PRELOAD_COUNT', 'imageCachePreloadCount');
+    this.setIntFromEnv(merged, 'IMAGE_CACHE_PRELOAD_DELAY', 'imageCachePreloadDelay');
 
     // Memory monitoring
-    if (process.env.ENABLE_MEMORY_MONITOR !== undefined) {
-      merged.enableMemoryMonitor = process.env.ENABLE_MEMORY_MONITOR === 'true';
-    }
-
-    if (process.env.MEMORY_MONITOR_INTERVAL) {
-      merged.memoryMonitorInterval = Number.parseInt(process.env.MEMORY_MONITOR_INTERVAL, 10);
-    }
-
-    if (process.env.MEMORY_THRESHOLD) {
-      merged.memoryThreshold = Number.parseFloat(process.env.MEMORY_THRESHOLD);
-    }
+    this.setBoolFromEnv(merged, 'ENABLE_MEMORY_MONITOR', 'enableMemoryMonitor');
+    this.setIntFromEnv(merged, 'MEMORY_MONITOR_INTERVAL', 'memoryMonitorInterval');
+    this.setFloatFromEnv(merged, 'MEMORY_THRESHOLD', 'memoryThreshold');
 
     // Boolean settings
-    if (process.env.RANDOMIZE_IMAGE_ORDER !== undefined) {
-      merged.randomizeImageOrder = process.env.RANDOMIZE_IMAGE_ORDER === 'true';
-    }
+    this.setBoolFromEnv(merged, 'RANDOMIZE_IMAGE_ORDER', 'randomizeImageOrder');
+    this.setBoolFromEnv(merged, 'SHOW_ALL_IMAGES_BEFORE_RESTART', 'showAllImagesBeforeRestart');
+    this.setBoolFromEnv(merged, 'RESIZE_IMAGES', 'resizeImages');
 
-    if (process.env.SHOW_ALL_IMAGES_BEFORE_RESTART !== undefined) {
-      merged.showAllImagesBeforeRestart = process.env.SHOW_ALL_IMAGES_BEFORE_RESTART === 'true';
-    }
-
-    if (process.env.RESIZE_IMAGES !== undefined) {
-      merged.resizeImages = process.env.RESIZE_IMAGES === 'true';
-    }
-
-    if (process.env.MAX_WIDTH) {
-      merged.maxWidth = Number.parseInt(process.env.MAX_WIDTH, 10);
-    }
-
-    if (process.env.MAX_HEIGHT) {
-      merged.maxHeight = Number.parseInt(process.env.MAX_HEIGHT, 10);
-    }
+    // Dimension settings
+    this.setIntFromEnv(merged, 'MAX_WIDTH', 'maxWidth');
+    this.setIntFromEnv(merged, 'MAX_HEIGHT', 'maxHeight');
 
     return merged;
   }

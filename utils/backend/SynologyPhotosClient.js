@@ -117,6 +117,123 @@ class SynologyPhotosClient {
   }
 
   /**
+   * Helper: Filter tags by name
+   */
+  filterMatchingTags (allTags) {
+    const tagNamesLower = new Set(this.tagNames.map((t) => t.toLowerCase()));
+    return allTags.filter((tag) => tagNamesLower.has(tag.name.toLowerCase()));
+  }
+
+  /**
+   * Helper: Find tags in shared album
+   */
+  async findTagsInSharedAlbum () {
+    const params = {
+      api: 'SYNO.Foto.Browse.GeneralTag',
+      version: '1',
+      method: 'list',
+      offset: 0,
+      limit: 500,
+      passphrase: this.shareToken
+    };
+
+    Log.info('Fetching tags from shared album');
+
+    const response = await axios.get(`${this.baseUrl}${this.photosApiPath}`, {
+      params,
+      timeout: 10000
+    });
+
+    if (!response.data.success) {
+      Log.error(`Failed to list tags: ${JSON.stringify(response.data)}`);
+      return false;
+    }
+
+    const matchedTags = this.filterMatchingTags(response.data.data.list);
+
+    if (matchedTags.length === 0) {
+      Log.warn(`No matching tags found for: ${this.tagNames.join(', ')}`);
+      return false;
+    }
+
+    this.tagIds.shared = matchedTags.map((tag) => tag.id);
+    Log.info(`Found ${matchedTags.length} matching tags in shared album: ${matchedTags.map((t) => t.name).join(', ')}`);
+    return true;
+  }
+
+  /**
+   * Helper: Find tags in a specific space
+   */
+  async findTagsInSpace (space) {
+    const params = {
+      api: space.api,
+      version: '1',
+      method: 'list',
+      offset: 0,
+      limit: 500,
+      _sid: this.sid
+    };
+
+    if (space.id === 0) {
+      params.space_id = 0;
+    }
+
+    const response = await axios.get(`${this.baseUrl}${this.photosApiPath}`, {
+      params,
+      timeout: 10000
+    });
+
+    if (!response.data.success) {
+      Log.warn(`Failed to list tags in ${space.name} space`);
+      return false;
+    }
+
+    const matchedTags = this.filterMatchingTags(response.data.data.list);
+
+    if (matchedTags.length === 0) {
+      return false;
+    }
+
+    this.tagIds[space.id] = matchedTags.map((tag) => tag.id);
+    Log.info(`Found ${matchedTags.length} tag(s) in ${space.name} space: ${matchedTags.map((t) => `${t.name}(${t.id})`).join(', ')}`);
+    return true;
+  }
+
+  /**
+   * Helper: Find tags across personal and shared spaces
+   */
+  async findTagsInMultipleSpaces () {
+    const spaces = [
+      {id: 0,
+        name: 'personal',
+        api: 'SYNO.Foto.Browse.GeneralTag'},
+      {id: 1,
+        name: 'shared',
+        api: 'SYNO.FotoTeam.Browse.GeneralTag'}
+    ];
+
+    let foundAnyTags = false;
+
+    for (const space of spaces) {
+      try {
+        const found = await this.findTagsInSpace(space);
+        if (found) {
+          foundAnyTags = true;
+        }
+      } catch (error) {
+        Log.warn(`Error fetching tags from ${space.name} space: ${error.message}`);
+      }
+    }
+
+    if (!foundAnyTags) {
+      Log.warn(`No matching tags found for: ${this.tagNames.join(', ')}`);
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
    * Find tags by name across personal and shared spaces
    * Returns space-specific tag IDs since same tag name can have different IDs in different spaces
    */
@@ -129,97 +246,48 @@ class SynologyPhotosClient {
       this.tagIds = {};
 
       if (this.useSharedAlbum) {
-        const params = {
-          api: 'SYNO.Foto.Browse.GeneralTag',
-          version: '1',
-          method: 'list',
-          offset: 0,
-          limit: 500,
-          passphrase: this.shareToken
-        };
-
-        Log.info('Fetching tags from shared album');
-
-        const response = await axios.get(`${this.baseUrl}${this.photosApiPath}`, {
-          params,
-          timeout: 10000
-        });
-
-        if (response.data.success) {
-          const allTags = response.data.data.list;
-          const tagNamesLower = new Set(this.tagNames.map((t) => t.toLowerCase()));
-          const matchedTags = allTags.filter((tag) => tagNamesLower.has(tag.name.toLowerCase()));
-
-          if (matchedTags.length > 0) {
-            this.tagIds.shared = matchedTags.map((tag) => tag.id);
-            Log.info(`Found ${matchedTags.length} matching tags in shared album: ${matchedTags.map((t) => t.name).join(', ')}`);
-            return true;
-          }
-          Log.warn(`No matching tags found for: ${this.tagNames.join(', ')}`);
-          return false;
-        }
-        Log.error(`Failed to list tags: ${JSON.stringify(response.data)}`);
-        return false;
-      }
-      const spaces = [
-        {id: 0,
-          name: 'personal',
-          api: 'SYNO.Foto.Browse.GeneralTag'},
-        {id: 1,
-          name: 'shared',
-          api: 'SYNO.FotoTeam.Browse.GeneralTag'}
-      ];
-
-      let foundAnyTags = false;
-
-      for (const space of spaces) {
-        try {
-          const params = {
-            api: space.api,
-            version: '1',
-            method: 'list',
-            offset: 0,
-            limit: 500,
-            _sid: this.sid
-          };
-
-          if (space.id === 0) {
-            params.space_id = 0;
-          }
-
-          const response = await axios.get(`${this.baseUrl}${this.photosApiPath}`, {
-            params,
-            timeout: 10000
-          });
-
-          if (response.data.success) {
-            const allTags = response.data.data.list;
-            const tagNamesLower = new Set(this.tagNames.map((t) => t.toLowerCase()));
-            const matchedTags = allTags.filter((tag) => tagNamesLower.has(tag.name.toLowerCase()));
-
-            if (matchedTags.length > 0) {
-              this.tagIds[space.id] = matchedTags.map((tag) => tag.id);
-              Log.info(`Found ${matchedTags.length} tag(s) in ${space.name} space: ${matchedTags.map((t) => `${t.name}(${t.id})`).join(', ')}`);
-              foundAnyTags = true;
-            }
-          } else {
-            Log.warn(`Failed to list tags in ${space.name} space`);
-          }
-        } catch (error) {
-          Log.warn(`Error fetching tags from ${space.name} space: ${error.message}`);
-        }
+        return await this.findTagsInSharedAlbum();
       }
 
-      if (!foundAnyTags) {
-        Log.warn(`No matching tags found for: ${this.tagNames.join(', ')}`);
-        return false;
-      }
-
-      return true;
+      return await this.findTagsInMultipleSpaces();
     } catch (error) {
       Log.error(`Error listing tags: ${error.message}`);
       return false;
     }
+  }
+
+  /**
+   * Helper: Fetch photos by tags across spaces
+   */
+  async fetchPhotosByTags () {
+    const fetchPromises = [];
+
+    for (const [spaceKey, tagIdArray] of Object.entries(this.tagIds)) {
+      const spaceId = spaceKey === 'shared'
+        ? null
+        : Number.parseInt(spaceKey, 10);
+
+      for (const tagId of tagIdArray) {
+        fetchPromises.push(this.fetchPhotosByTagInSpace(tagId, spaceId));
+      }
+    }
+
+    const photoArrays = await Promise.all(fetchPromises);
+    const photos = photoArrays.flat();
+    return this.removeDuplicatePhotos(photos);
+  }
+
+  /**
+   * Helper: Fetch photos from albums
+   */
+  async fetchPhotosFromAlbums () {
+    if (this.folderIds.length === 0) {
+      return await this.fetchAllPhotos();
+    }
+
+    const albumPromises = this.folderIds.map((folderId) => this.fetchAlbumPhotos(folderId));
+    const photoArrays = await Promise.all(albumPromises);
+    return photoArrays.flat();
   }
 
   /**
@@ -230,36 +298,11 @@ class SynologyPhotosClient {
       let photos = [];
 
       if (this.tagIds && Object.keys(this.tagIds).length > 0) {
-        // Fetch all tag photos in parallel for better performance
-        const fetchPromises = [];
-
-        for (const [spaceKey, tagIdArray] of Object.entries(this.tagIds)) {
-          const spaceId = spaceKey === 'shared'
-            ? null
-            : Number.parseInt(spaceKey, 10);
-
-          for (const tagId of tagIdArray) {
-            fetchPromises.push(this.fetchPhotosByTagInSpace(tagId, spaceId));
-          }
-        }
-
-        // Wait for all requests to complete
-        const photoArrays = await Promise.all(fetchPromises);
-        photos = photoArrays.flat();
-        photos = this.removeDuplicatePhotos(photos);
+        photos = await this.fetchPhotosByTags();
       } else if (this.useSharedAlbum) {
-        // Get all photos from shared album (no tag filtering)
         photos = await this.fetchSharedAlbumPhotos();
       } else {
-        if (this.folderIds.length === 0) {
-          // Get all photos if no specific album
-          photos = await this.fetchAllPhotos();
-        } else {
-          // Get photos from all albums in parallel
-          const albumPromises = this.folderIds.map((folderId) => this.fetchAlbumPhotos(folderId));
-          const photoArrays = await Promise.all(albumPromises);
-          photos = photoArrays.flat();
-        }
+        photos = await this.fetchPhotosFromAlbums();
       }
 
       Log.info(`Fetched ${photos.length} photos from Synology Photos`);
