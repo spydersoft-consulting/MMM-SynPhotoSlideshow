@@ -77,15 +77,15 @@ class ConfigLoader {
 
     // Numeric settings
     if (process.env.SYNOLOGY_MAX_PHOTOS) {
-      merged.synologyMaxPhotos = parseInt(process.env.SYNOLOGY_MAX_PHOTOS, 10);
+      merged.synologyMaxPhotos = Number.parseInt(process.env.SYNOLOGY_MAX_PHOTOS, 10);
     }
 
     if (process.env.SLIDESHOW_SPEED) {
-      merged.slideshowSpeed = parseInt(process.env.SLIDESHOW_SPEED, 10);
+      merged.slideshowSpeed = Number.parseInt(process.env.SLIDESHOW_SPEED, 10);
     }
 
     if (process.env.REFRESH_IMAGE_LIST_INTERVAL) {
-      merged.refreshImageListInterval = parseInt(process.env.REFRESH_IMAGE_LIST_INTERVAL, 10);
+      merged.refreshImageListInterval = Number.parseInt(process.env.REFRESH_IMAGE_LIST_INTERVAL, 10);
     }
 
     // Cache settings
@@ -94,15 +94,15 @@ class ConfigLoader {
     }
 
     if (process.env.IMAGE_CACHE_MAX_SIZE) {
-      merged.imageCacheMaxSize = parseInt(process.env.IMAGE_CACHE_MAX_SIZE, 10);
+      merged.imageCacheMaxSize = Number.parseInt(process.env.IMAGE_CACHE_MAX_SIZE, 10);
     }
 
     if (process.env.IMAGE_CACHE_PRELOAD_COUNT) {
-      merged.imageCachePreloadCount = parseInt(process.env.IMAGE_CACHE_PRELOAD_COUNT, 10);
+      merged.imageCachePreloadCount = Number.parseInt(process.env.IMAGE_CACHE_PRELOAD_COUNT, 10);
     }
 
     if (process.env.IMAGE_CACHE_PRELOAD_DELAY) {
-      merged.imageCachePreloadDelay = parseInt(process.env.IMAGE_CACHE_PRELOAD_DELAY, 10);
+      merged.imageCachePreloadDelay = Number.parseInt(process.env.IMAGE_CACHE_PRELOAD_DELAY, 10);
     }
 
     // Memory monitoring
@@ -111,7 +111,7 @@ class ConfigLoader {
     }
 
     if (process.env.MEMORY_MONITOR_INTERVAL) {
-      merged.memoryMonitorInterval = parseInt(process.env.MEMORY_MONITOR_INTERVAL, 10);
+      merged.memoryMonitorInterval = Number.parseInt(process.env.MEMORY_MONITOR_INTERVAL, 10);
     }
 
     if (process.env.MEMORY_THRESHOLD) {
@@ -132,11 +132,11 @@ class ConfigLoader {
     }
 
     if (process.env.MAX_WIDTH) {
-      merged.maxWidth = parseInt(process.env.MAX_WIDTH, 10);
+      merged.maxWidth = Number.parseInt(process.env.MAX_WIDTH, 10);
     }
 
     if (process.env.MAX_HEIGHT) {
-      merged.maxHeight = parseInt(process.env.MAX_HEIGHT, 10);
+      merged.maxHeight = Number.parseInt(process.env.MAX_HEIGHT, 10);
     }
 
     return merged;

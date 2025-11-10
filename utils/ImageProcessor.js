@@ -24,8 +24,8 @@ class ImageProcessor {
       const buffer = await sharp(inputPath)
         .rotate()
         .resize({
-          width: parseInt(this.config.maxWidth, 10),
-          height: parseInt(this.config.maxHeight, 10),
+          width: Number.parseInt(this.config.maxWidth, 10),
+          height: Number.parseInt(this.config.maxHeight, 10),
           fit: 'inside',
         })
         .jpeg({

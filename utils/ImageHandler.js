@@ -2,9 +2,10 @@
  * ImageHandler.js
  *
  * Handles image display logic, sizing, and orientation
+ * Works in both browser (MagicMirror) and Node.js contexts
  */
 
-const Log = require('./Logger.js');
+/* eslint-disable no-console */
 
 class ImageHandler {
   constructor (config) {
@@ -38,12 +39,12 @@ class ImageHandler {
     // If it's a portrait image on a landscape screen
     if (isPortrait && screenAspectRatio > 1) {
       imageDiv.classList.add('portrait-mode');
-      Log.debug(`Portrait image detected (${image.width}x${image.height}), using contain mode`);
+      console.debug(`[MMM-SynPhotoSlideshow] Portrait image detected (${image.width}x${image.height}), using contain mode`);
       return true;
     } else if (!isPortrait) {
       // All landscape images - use full width with black bars on top/bottom
       imageDiv.classList.add('landscape-mode');
-      Log.debug(`Landscape image detected (${image.width}x${image.height}), using contain with letterbox`);
+      console.debug(`[MMM-SynPhotoSlideshow] Landscape image detected (${image.width}x${image.height}), using contain with letterbox`);
       return true;
     }
 

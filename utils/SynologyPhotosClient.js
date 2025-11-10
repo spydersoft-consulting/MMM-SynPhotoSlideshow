@@ -236,7 +236,7 @@ class SynologyPhotosClient {
         for (const [spaceKey, tagIdArray] of Object.entries(this.tagIds)) {
           const spaceId = spaceKey === 'shared'
             ? null
-            : parseInt(spaceKey, 10);
+            : Number.parseInt(spaceKey, 10);
 
           for (const tagId of tagIdArray) {
             fetchPromises.push(this.fetchPhotosByTagInSpace(tagId, spaceId));

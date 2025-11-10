@@ -2,9 +2,10 @@
  * ConfigValidator.js
  *
  * Handles configuration validation and normalization
+ * Works in both browser (MagicMirror) and Node.js contexts
  */
 
-const Log = require('./Logger.js');
+/* eslint-disable no-console */
 
 class ConfigValidator {
 
@@ -18,7 +19,7 @@ class ConfigValidator {
     // Validate imageinfo property
     const imageInfoRegex = /\bname\b|\bdate\b/giu;
     if (config.showImageInfo && !imageInfoRegex.test(config.imageInfo)) {
-      Log.warn('showImageInfo is set, but imageInfo does not have a valid value.');
+      console.warn('[MMM-SynPhotoSlideshow] showImageInfo is set, but imageInfo does not have a valid value.');
       config.imageInfo = ['name'];
     } else {
       // Convert to lower case and replace any spaces with , to make sure we get an array back

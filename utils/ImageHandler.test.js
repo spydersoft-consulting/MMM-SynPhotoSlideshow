@@ -4,8 +4,7 @@
  * Unit tests for ImageHandler
  */
 
-// Mock the Logger
-jest.mock('./Logger.js');
+/* eslint-disable no-console */
 
 // Mock browser globals
 global.CSS = {
@@ -28,8 +27,14 @@ global.EXIF = {
 
 global.Math.random = jest.fn();
 
+// Mock console methods
+global.console = {
+  ...console,
+  debug: jest.fn(),
+  log: jest.fn(),
+};
+
 const ImageHandler = require('./ImageHandler');
-const Log = require('./Logger.js');
 
 describe('ImageHandler', () => {
   let imageHandler;
@@ -151,7 +156,7 @@ describe('ImageHandler', () => {
 
       expect(result).toBe(true);
       expect(mockDiv.classList.add).toHaveBeenCalledWith('portrait-mode');
-      expect(Log.debug).toHaveBeenCalled();
+      expect(console.debug).toHaveBeenCalled();
     });
 
     it('should add landscape-mode class for landscape images', () => {
@@ -164,7 +169,7 @@ describe('ImageHandler', () => {
 
       expect(result).toBe(true);
       expect(mockDiv.classList.add).toHaveBeenCalledWith('landscape-mode');
-      expect(Log.debug).toHaveBeenCalled();
+      expect(console.debug).toHaveBeenCalled();
     });
 
     it('should return false for portrait images on portrait screen', () => {

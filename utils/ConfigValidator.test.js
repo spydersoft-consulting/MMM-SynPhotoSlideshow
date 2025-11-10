@@ -4,11 +4,17 @@
  * Unit tests for ConfigValidator
  */
 
-// Mock the logger
-jest.mock('./Logger.js');
+/* eslint-disable no-console */
 
 const ConfigValidator = require('./ConfigValidator');
-const Log = require('./Logger.js');
+
+// Mock console methods
+global.console = {
+  ...console,
+  warn: jest.fn(),
+  debug: jest.fn(),
+  log: jest.fn(),
+};
 
 describe('ConfigValidator', () => {
   beforeEach(() => {
@@ -119,7 +125,7 @@ describe('ConfigValidator', () => {
 
         const result = ConfigValidator.validateConfig(config);
 
-        expect(Log.warn).toHaveBeenCalledWith(expect.stringContaining('showImageInfo is set, but imageInfo does not have a valid value.'));
+        expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('showImageInfo is set, but imageInfo does not have a valid value.'));
         expect(result.imageInfo).toEqual(['name']);
       });
 
@@ -135,7 +141,7 @@ describe('ConfigValidator', () => {
 
         const result = ConfigValidator.validateConfig(config);
 
-        expect(Log.warn).not.toHaveBeenCalled();
+        expect(console.warn).not.toHaveBeenCalled();
         expect(result.imageInfo).toEqual(['name']);
       });
 
@@ -151,7 +157,7 @@ describe('ConfigValidator', () => {
 
         const result = ConfigValidator.validateConfig(config);
 
-        expect(Log.warn).not.toHaveBeenCalled();
+        expect(console.warn).not.toHaveBeenCalled();
         expect(result.imageInfo).toEqual(['date']);
       });
 
@@ -167,7 +173,7 @@ describe('ConfigValidator', () => {
 
         const result = ConfigValidator.validateConfig(config);
 
-        expect(Log.warn).not.toHaveBeenCalled();
+        expect(console.warn).not.toHaveBeenCalled();
         expect(result.imageInfo).toEqual(['name', 'date']);
       });
 
