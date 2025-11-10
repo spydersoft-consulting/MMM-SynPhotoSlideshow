@@ -204,7 +204,9 @@ class ConfigLoader {
     }
 
     // Log configuration summary
-    if (!hasErrors) {
+    if (hasErrors) {
+      Log.error('Configuration validation FAILED - module will not work correctly!');
+    } else {
       Log.info('Configuration validated successfully');
       Log.info(`  URL: ${config.synologyUrl}`);
       Log.info(`  Auth: ${hasShareToken
@@ -216,8 +218,6 @@ class ConfigLoader {
       if (config.synologyTagNames && config.synologyTagNames.length > 0) {
         Log.info(`  Tags: ${config.synologyTagNames.join(', ')}`);
       }
-    } else {
-      Log.error('Configuration validation FAILED - module will not work correctly!');
     }
 
     return !hasErrors;

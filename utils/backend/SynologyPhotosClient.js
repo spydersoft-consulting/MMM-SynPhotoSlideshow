@@ -469,30 +469,32 @@ class SynologyPhotosClient {
     const imageList = [];
 
     for (const photo of photos) {
-      // Only include photos, not videos
-      if (photo.type === 'photo' || photo.type === 'live_photo') {
-        const imageUrl = this.getPhotoUrl(photo.id, photo.additional?.thumbnail?.cache_key, spaceId);
-
-        // Create unique ID that includes space information if provided
-        const uniqueId = spaceId !== null
-          ? `${spaceId}_${photo.id}`
-          : photo.id;
-
-        imageList.push({
-          path: photo.filename || `photo_${photo.id}`,
-          url: imageUrl,
-          id: uniqueId,
-          synologyId: photo.id, // Keep original ID for API calls
-          spaceId,
-          created: photo.time
-            ? photo.time * 1000
-            : Date.now(),
-          modified: photo.indexed_time
-            ? photo.indexed_time * 1000
-            : Date.now(),
-          isSynology: true
-        });
+      // Skip videos, only include photos
+      if (photo.type !== 'photo' && photo.type !== 'live_photo') {
+        continue;
       }
+
+      const imageUrl = this.getPhotoUrl(photo.id, photo.additional?.thumbnail?.cache_key, spaceId);
+
+      // Create unique ID that includes space information if provided
+      const uniqueId = spaceId !== null
+        ? `${spaceId}_${photo.id}`
+        : photo.id;
+
+      imageList.push({
+        path: photo.filename || `photo_${photo.id}`,
+        url: imageUrl,
+        id: uniqueId,
+        synologyId: photo.id, // Keep original ID for API calls
+        spaceId,
+        created: photo.time
+          ? photo.time * 1000
+          : Date.now(),
+        modified: photo.indexed_time
+          ? photo.indexed_time * 1000
+          : Date.now(),
+        isSynology: true
+      });
     }
 
     return imageList;

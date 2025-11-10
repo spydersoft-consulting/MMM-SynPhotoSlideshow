@@ -292,7 +292,9 @@ class ImageCache {
       const key = this.getCacheKey(image.url || image.path);
       const cachedMeta = this.cache.get(key);
 
-      if (!cachedMeta) {
+      if (cachedMeta) {
+        Log.debug(`Skipping preload, already cached: ${image.path}`);
+      } else {
         // Download and cache
         try {
           await new Promise((resolve, reject) => {
@@ -319,8 +321,6 @@ class ImageCache {
           Log.error(`Error preloading image: ${error.message}`);
           // Continue with next image
         }
-      } else {
-        Log.debug(`Skipping preload, already cached: ${image.path}`);
       }
     }
 
