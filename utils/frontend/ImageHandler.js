@@ -41,7 +41,9 @@ class ImageHandler {
       imageDiv.classList.add('portrait-mode');
       console.debug(`[MMM-SynPhotoSlideshow] Portrait image detected (${image.width}x${image.height}), using contain mode`);
       return true;
-    } else if (!isPortrait) {
+    }
+
+    if (!isPortrait) {
       // All landscape images - use full width with black bars on top/bottom
       imageDiv.classList.add('landscape-mode');
       console.debug(`[MMM-SynPhotoSlideshow] Landscape image detected (${image.width}x${image.height}), using contain with letterbox`);
@@ -85,18 +87,16 @@ class ImageHandler {
 
     if (adjustedWidth / window.innerWidth > adjustedHeight / window.innerHeight) {
       // Scrolling horizontally...
-      if (Math.floor(Math.random() * 2)) {
-        imageDiv.className += ' slideH';
-      } else {
-        imageDiv.className += ' slideHInv';
-      }
+      const slideClass = Math.floor(Math.random() * 2)
+        ? ' slideH'
+        : ' slideHInv';
+      imageDiv.className += slideClass;
     } else {
       // Scrolling vertically...
-      if (Math.floor(Math.random() * 2)) {
-        imageDiv.className += ' slideV';
-      } else {
-        imageDiv.className += ' slideVInv';
-      }
+      const slideClass = Math.floor(Math.random() * 2)
+        ? ' slideV'
+        : ' slideVInv';
+      imageDiv.className += slideClass;
     }
   }
 

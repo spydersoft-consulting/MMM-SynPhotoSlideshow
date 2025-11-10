@@ -41,7 +41,7 @@ class TransitionHandler {
       }
 
       // Remove the node
-      imagesDiv.removeChild(oldNode);
+      oldNode.remove();
     }
 
     // Fade out current image if present
@@ -56,7 +56,7 @@ class TransitionHandler {
           if (currentNode.firstChild?.style) {
             currentNode.firstChild.style.backgroundImage = '';
           }
-          imagesDiv.removeChild(currentNode);
+          currentNode.remove();
         }
       }, Number.parseFloat(this.config.transitionSpeed) * 1000);
     }
