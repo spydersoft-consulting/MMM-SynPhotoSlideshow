@@ -147,8 +147,8 @@ class SynologyPhotosClient {
 
         if (response.data.success) {
           const allTags = response.data.data.list;
-          const tagNamesLower = this.tagNames.map((t) => t.toLowerCase());
-          const matchedTags = allTags.filter((tag) => tagNamesLower.includes(tag.name.toLowerCase()));
+          const tagNamesLower = new Set(this.tagNames.map((t) => t.toLowerCase()));
+          const matchedTags = allTags.filter((tag) => tagNamesLower.has(tag.name.toLowerCase()));
 
           if (matchedTags.length > 0) {
             this.tagIds.shared = matchedTags.map((tag) => tag.id);
@@ -194,8 +194,8 @@ class SynologyPhotosClient {
 
           if (response.data.success) {
             const allTags = response.data.data.list;
-            const tagNamesLower = this.tagNames.map((t) => t.toLowerCase());
-            const matchedTags = allTags.filter((tag) => tagNamesLower.includes(tag.name.toLowerCase()));
+            const tagNamesLower = new Set(this.tagNames.map((t) => t.toLowerCase()));
+            const matchedTags = allTags.filter((tag) => tagNamesLower.has(tag.name.toLowerCase()));
 
             if (matchedTags.length > 0) {
               this.tagIds[space.id] = matchedTags.map((tag) => tag.id);
