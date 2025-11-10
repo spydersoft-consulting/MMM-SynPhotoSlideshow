@@ -36,7 +36,7 @@ class TransitionHandler {
       const [oldNode] = imagesDiv.childNodes;
 
       // Clear background image to release memory
-      if (oldNode.firstChild && oldNode.firstChild.style) {
+      if (oldNode.firstChild?.style) {
         oldNode.firstChild.style.backgroundImage = '';
       }
 
@@ -53,12 +53,12 @@ class TransitionHandler {
       setTimeout(() => {
         if (currentNode.parentNode === imagesDiv && imagesDiv.childNodes.length > 1) {
           // Clear background image before removal
-          if (currentNode.firstChild && currentNode.firstChild.style) {
+          if (currentNode.firstChild?.style) {
             currentNode.firstChild.style.backgroundImage = '';
           }
           imagesDiv.removeChild(currentNode);
         }
-      }, parseFloat(this.config.transitionSpeed) * 1000);
+      }, Number.parseFloat(this.config.transitionSpeed) * 1000);
     }
   }
 }

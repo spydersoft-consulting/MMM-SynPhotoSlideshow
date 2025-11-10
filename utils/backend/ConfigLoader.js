@@ -117,7 +117,7 @@ class ConfigLoader {
     }
 
     if (process.env.MEMORY_THRESHOLD) {
-      merged.memoryThreshold = parseFloat(process.env.MEMORY_THRESHOLD);
+      merged.memoryThreshold = Number.parseFloat(process.env.MEMORY_THRESHOLD);
     }
 
     // Boolean settings

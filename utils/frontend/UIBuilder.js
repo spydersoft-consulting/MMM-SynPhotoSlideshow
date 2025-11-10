@@ -79,7 +79,7 @@ class UIBuilder {
           }
           break;
 
-        case 'name':
+        case 'name': {
           // Only display last path component as image name
           let imageName = imageinfo.path.split('/').pop();
 
@@ -92,6 +92,7 @@ class UIBuilder {
           }
           imageProps.push(imageName);
           break;
+        }
 
         case 'imagecount':
           imageProps.push(`${imageinfo.index} of ${imageinfo.total}`);
