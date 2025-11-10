@@ -7,10 +7,9 @@
 const Log = require('./Logger.js');
 
 class TimerManager {
-  constructor () {
-    this.slideshowTimer = null;
-    this.refreshTimer = null;
-  }
+  slideshowTimer = null;
+
+  refreshTimer = null;
 
   /**
    * Stop slideshow timer

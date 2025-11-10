@@ -25,10 +25,10 @@ class ConfigValidator {
       // Convert to lower case and replace any spaces with , to make sure we get an array back
       config.imageInfo = config.imageInfo
         .toLowerCase()
-        .replace(/\s/gu, ',')
+        .replaceAll(/\s/gu, ',')
         .split(',');
       // Filter the array to only those that have values
-      config.imageInfo = config.imageInfo.filter((n) => n);
+      config.imageInfo = config.imageInfo.filter(Boolean);
     }
 
     // Disable transition speed if transitions are disabled

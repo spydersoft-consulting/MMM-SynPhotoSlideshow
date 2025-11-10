@@ -8,10 +8,9 @@ const Log = require('./Logger.js');
 const SynologyPhotosClient = require('./SynologyPhotosClient.js');
 
 class SynologyManager {
-  constructor () {
-    this.client = null;
-    this.photos = [];
-  }
+  client = null;
+
+  photos = [];
 
   /**
    * Fetch photos from Synology Photos

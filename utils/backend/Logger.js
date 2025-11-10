@@ -8,10 +8,8 @@
 const LOG_PREFIX = '[MMM-SynPhotoSlideshow]';
 
 class Logger {
-  constructor () {
-    // Lazily load the MagicMirror logger when first needed
-    this._log = null;
-  }
+  // Lazily load the MagicMirror logger when first needed
+  _log = null;
 
   /**
    * Get the MagicMirror logger instance
