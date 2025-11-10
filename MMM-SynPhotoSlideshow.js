@@ -142,10 +142,10 @@ Module.register('MMM-SynPhotoSlideshow', {
     return [
       `modules/${this.name}/node_modules/exif-js/exif.js`,
       'moment.js',
-      this.file('utils/ConfigValidator.js'),
-      this.file('utils/ImageHandler.js'),
-      this.file('utils/UIBuilder.js'),
-      this.file('utils/TransitionHandler.js')
+      this.file('utils/frontend/ConfigValidator.js'),
+      this.file('utils/frontend/ImageHandler.js'),
+      this.file('utils/frontend/UIBuilder.js'),
+      this.file('utils/frontend/TransitionHandler.js')
     ];
   },
 

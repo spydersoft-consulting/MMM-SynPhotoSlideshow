@@ -1,10 +1,32 @@
 # Utility Modules
 
-The MMM-SynPhotoSlideshow module uses a set of utility modules to organize code into manageable, focused components. This directory contains both frontend (browser) and backend (Node.js) utilities.
+The MMM-SynPhotoSlideshow module uses a set of utility modules to organize code into manageable, focused components.
+
+## Directory Structure
+
+```
+utils/
+├── frontend/           # Browser-side utilities (loaded via getScripts())
+│   ├── ConfigValidator.js
+│   ├── ImageHandler.js
+│   ├── UIBuilder.js
+│   └── TransitionHandler.js
+├── backend/            # Node.js utilities (loaded via require())
+│   ├── Logger.js
+│   ├── ConfigLoader.js
+│   ├── ImageListManager.js
+│   ├── TimerManager.js
+│   ├── ImageProcessor.js
+│   ├── ImageCache.js
+│   ├── MemoryMonitor.js
+│   ├── SynologyManager.js
+│   └── SynologyPhotosClient.js
+└── README.md
+```
 
 ## Frontend Utilities (Browser)
 
-These modules run in the browser and handle UI and display logic.
+Located in `utils/frontend/`. These modules run in the browser and handle UI and display logic. They are loaded via `getScripts()` in `MMM-SynPhotoSlideshow.js` and cannot use Node.js `require()` statements.
 
 ### ConfigValidator.js
 
@@ -95,7 +117,51 @@ These modules run in the browser and handle UI and display logic.
 
 ## Backend Utilities (Node.js)
 
-These modules run in Node.js and handle server-side operations.
+Located in `utils/backend/`. These modules run in Node.js and handle server-side operations. They are loaded via `require()` in `node_helper.js` and can use all Node.js APIs.
+
+### Logger.js
+
+**Purpose:** Centralized logging with proper MagicMirror integration
+
+**Responsibilities:**
+
+- Provides singleton logger instance
+- Integrates with MagicMirror's Log system
+- Falls back to console when Log unavailable
+- Supports all log levels (debug, info, warn, error)
+
+**Key Methods:**
+
+- `getLogger()` - Get singleton logger instance
+- `debug(message)` - Log debug messages
+- `info(message)` - Log info messages
+- `warn(message)` - Log warning messages
+- `error(message)` - Log error messages
+
+**Usage:** Singleton used throughout backend modules
+
+---
+
+### ConfigLoader.js
+
+**Purpose:** Environment variable and .env file configuration loading
+
+**Responsibilities:**
+
+- Loads configuration from .env files
+- Merges environment variables with config
+- Parses numeric and boolean values
+- Converts array string formats to arrays
+
+**Key Methods:**
+
+- `initialize(config)` - Main entry point to merge config with environment
+- `loadEnvFile()` - Load .env file if it exists
+- `parseEnvValue(value)` - Parse environment variable strings
+
+**Usage:** Static class used in node_helper during config initialization
+
+---
 
 ### ImageListManager.js
 
@@ -276,6 +342,35 @@ These modules run in Node.js and handle server-side operations.
 
 ---
 
+### MemoryMonitor.js
+
+**Purpose:** Memory usage monitoring and cleanup
+
+**Responsibilities:**
+
+- Monitors Node.js process memory usage
+- Triggers cleanup callbacks when threshold exceeded
+- Provides memory statistics and warnings
+- Configurable monitoring interval and threshold
+
+**Key Methods:**
+
+- `start()` - Start memory monitoring
+- `stop()` - Stop memory monitoring
+- `onCleanupNeeded(callback)` - Register cleanup callback
+- `getMemoryUsage()` - Get current memory statistics
+- `checkMemory()` - Check memory and trigger cleanup if needed
+
+**Configuration:**
+
+- `enableMemoryMonitor` - Enable/disable monitoring (default: true)
+- `memoryMonitorInterval` - Check interval in ms (default: 60000)
+- `memoryThreshold` - Cleanup threshold % (default: 0.85)
+
+**Usage:** Instantiated in node_helper when monitoring is enabled
+
+---
+
 ## Module Organization
 
 ### Frontend Flow
@@ -292,9 +387,13 @@ MMM-SynPhotoSlideshow.js
 
 ```
 node_helper.js
+├── Logger (logging)
+├── ConfigLoader (config loading)
 ├── ImageListManager (manages image list)
 ├── TimerManager (controls timers)
 ├── ImageProcessor (processes images)
+├── ImageCache (caches images)
+├── MemoryMonitor (monitors memory)
 └── SynologyManager (Synology integration)
     └── SynologyPhotosClient (API client)
 ```
@@ -366,15 +465,22 @@ this.timerManager.startSlideshowTimer(callback, interval);
 
 ```
 utils/
-├── ConfigValidator.js      # Frontend: Config validation
-├── ImageHandler.js          # Frontend: Image display
-├── UIBuilder.js             # Frontend: UI elements
-├── TransitionHandler.js     # Frontend: Transitions
-├── ImageListManager.js      # Backend: List management
-├── TimerManager.js          # Backend: Timer control
-├── ImageProcessor.js        # Backend: Image processing
-├── SynologyManager.js       # Backend: Synology API
-└── README.md               # This file
+├── frontend/                    # Browser-side utilities
+│   ├── ConfigValidator.js       # Config validation
+│   ├── ImageHandler.js          # Image display
+│   ├── UIBuilder.js             # UI elements
+│   └── TransitionHandler.js     # Transitions
+├── backend/                     # Node.js utilities
+│   ├── Logger.js                # Logging
+│   ├── ConfigLoader.js          # Config loading
+│   ├── ImageListManager.js      # List management
+│   ├── TimerManager.js          # Timer control
+│   ├── ImageProcessor.js        # Image processing
+│   ├── ImageCache.js            # Image caching
+│   ├── MemoryMonitor.js         # Memory monitoring
+│   ├── SynologyManager.js       # Synology API coordinator
+│   └── SynologyPhotosClient.js  # Synology API client
+└── README.md                    # This file
 ```
 
 ## Adding New Utilities

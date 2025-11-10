@@ -14,7 +14,7 @@ class ConfigLoader {
   static loadEnv () {
     try {
       const dotenv = require('dotenv');
-      const envPath = path.join(__dirname, '..', '.env');
+      const envPath = path.join(__dirname, '../..', '.env');
       const fs = require('node:fs');
 
       Log.info(`Looking for .env file at: ${envPath}`);

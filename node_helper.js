@@ -13,16 +13,16 @@
 
 const {exec} = require('node:child_process');
 const NodeHelper = require('node_helper');
-const Log = require('./utils/Logger.js');
+const Log = require('./utils/backend/Logger.js');
 
 // Import utility modules
-const ImageListManager = require('./utils/ImageListManager.js');
-const TimerManager = require('./utils/TimerManager.js');
-const ImageProcessor = require('./utils/ImageProcessor.js');
-const SynologyManager = require('./utils/SynologyManager.js');
-const ImageCache = require('./utils/ImageCache.js');
-const MemoryMonitor = require('./utils/MemoryMonitor.js');
-const ConfigLoader = require('./utils/ConfigLoader.js');
+const ImageListManager = require('./utils/backend/ImageListManager.js');
+const TimerManager = require('./utils/backend/TimerManager.js');
+const ImageProcessor = require('./utils/backend/ImageProcessor.js');
+const SynologyManager = require('./utils/backend/SynologyManager.js');
+const ImageCache = require('./utils/backend/ImageCache.js');
+const MemoryMonitor = require('./utils/backend/MemoryMonitor.js');
+const ConfigLoader = require('./utils/backend/ConfigLoader.js');
 
 // the main module helper create
 module.exports = NodeHelper.create({
@@ -36,8 +36,6 @@ module.exports = NodeHelper.create({
     this.imageProcessor = null; // Initialized when config is received
     this.memoryMonitor = null; // Initialized when config is received
     this.config = null;
-    /* eslint-disable-next-line no-global-assign, no-implicit-globals */
-    self = this;
   },
 
 
@@ -120,20 +118,20 @@ module.exports = NodeHelper.create({
     // Read and send image
     this.imageProcessor.readFile(image.path, (data) => {
       const returnPayload = {
-        identifier: self.config.identifier,
+        identifier: this.config.identifier,
         path: image.path,
         data,
-        index: self.imageListManager.index,
-        total: self.imageListManager.getList().length
+        index: this.imageListManager.index,
+        total: this.imageListManager.getList().length
       };
       Log.info(`[MMM-SynPhotoSlideshow] Sending DISPLAY_IMAGE notification for "${image.path}"`);
-      self.sendSocketNotification('BACKGROUNDSLIDESHOW_DISPLAY_IMAGE', returnPayload);
+      this.sendSocketNotification('BACKGROUNDSLIDESHOW_DISPLAY_IMAGE', returnPayload);
     }, imageUrl, synologyClient);
 
     // Restart slideshow timer
     const slideshowSpeed = this.config?.slideshowSpeed || 10000;
     this.timerManager.startSlideshowTimer(() => {
-      self.getNextImage();
+      this.getNextImage();
     }, slideshowSpeed);
 
     // Track shown image
@@ -168,7 +166,7 @@ module.exports = NodeHelper.create({
     // Restart the refresh timer
     const refreshInterval = this.config?.refreshImageListInterval || 60 * 60 * 1000;
     this.timerManager.startRefreshTimer(() => {
-      self.refreshImageList();
+      this.refreshImageList();
     }, refreshInterval);
   },
 
@@ -230,7 +228,7 @@ module.exports = NodeHelper.create({
         // Start the refresh timer
         const refreshInterval = config?.refreshImageListInterval || 60 * 60 * 1000;
         this.timerManager.startRefreshTimer(() => {
-          self.refreshImageList();
+          this.refreshImageList();
         }, refreshInterval);
       }, 200);
     } else if (notification === 'BACKGROUNDSLIDESHOW_PLAY_VIDEO') {
@@ -251,12 +249,12 @@ module.exports = NodeHelper.create({
     } else if (notification === 'BACKGROUNDSLIDESHOW_PLAY') {
       const slideshowSpeed = this.config?.slideshowSpeed || 10000;
       this.timerManager.startSlideshowTimer(() => {
-        self.getNextImage();
+        this.getNextImage();
       }, slideshowSpeed);
 
       const refreshInterval = this.config?.refreshImageListInterval || 60 * 60 * 1000;
       this.timerManager.startRefreshTimer(() => {
-        self.refreshImageList();
+        this.refreshImageList();
       }, refreshInterval);
     }
   }
