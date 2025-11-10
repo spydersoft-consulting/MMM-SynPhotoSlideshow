@@ -4,6 +4,8 @@
  * Handles image display logic, sizing, and orientation
  */
 
+const Log = require('./Logger.js');
+
 class ImageHandler {
   constructor (config) {
     this.config = config;
@@ -36,12 +38,12 @@ class ImageHandler {
     // If it's a portrait image on a landscape screen
     if (isPortrait && screenAspectRatio > 1) {
       imageDiv.classList.add('portrait-mode');
-      Log.debug(`[MMM-SynPhotoSlideshow] Portrait image detected (${image.width}x${image.height}), using contain mode`);
+      Log.debug(`Portrait image detected (${image.width}x${image.height}), using contain mode`);
       return true;
     } else if (!isPortrait) {
       // All landscape images - use full width with black bars on top/bottom
       imageDiv.classList.add('landscape-mode');
-      Log.debug(`[MMM-SynPhotoSlideshow] Landscape image detected (${image.width}x${image.height}), using contain with letterbox`);
+      Log.debug(`Landscape image detected (${image.width}x${image.height}), using contain with letterbox`);
       return true;
     }
 

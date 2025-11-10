@@ -85,7 +85,10 @@ class UIBuilder {
 
           // Remove file extension from image name
           if (this.config.imageInfoNoFileExt) {
-            imageName = imageName.substring(0, imageName.lastIndexOf('.'));
+            const dotIndex = imageName.lastIndexOf('.');
+            if (dotIndex > 0) {
+              imageName = imageName.substring(0, dotIndex);
+            }
           }
           imageProps.push(imageName);
           break;
