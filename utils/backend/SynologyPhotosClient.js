@@ -477,9 +477,9 @@ class SynologyPhotosClient {
       const imageUrl = this.getPhotoUrl(photo.id, photo.additional?.thumbnail?.cache_key, spaceId);
 
       // Create unique ID that includes space information if provided
-      const uniqueId = spaceId !== null
-        ? `${spaceId}_${photo.id}`
-        : photo.id;
+      const uniqueId = spaceId === null
+        ? photo.id
+        : `${spaceId}_${photo.id}`;
 
       imageList.push({
         path: photo.filename || `photo_${photo.id}`,

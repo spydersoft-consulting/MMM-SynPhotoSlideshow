@@ -89,9 +89,9 @@ class MemoryMonitor {
     }
 
     // Force garbage collection if available (requires --expose-gc flag)
-    if (global.gc) {
+    if (globalThis.gc) {
       Log.info('Running garbage collection');
-      global.gc();
+      globalThis.gc();
     }
   }
 
