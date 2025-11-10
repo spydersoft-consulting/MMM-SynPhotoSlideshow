@@ -4,6 +4,8 @@
  * Loads configuration from environment variables or config file
  */
 
+/* eslint-disable no-undefined */
+
 const path = require('node:path');
 const Log = require('./Logger.js');
 
@@ -89,7 +91,7 @@ class ConfigLoader {
     }
 
     // Cache settings
-    if (typeof process.env.ENABLE_IMAGE_CACHE !== 'undefined') {
+    if (process.env.ENABLE_IMAGE_CACHE !== undefined) {
       merged.enableImageCache = process.env.ENABLE_IMAGE_CACHE === 'true';
     }
 
@@ -106,7 +108,7 @@ class ConfigLoader {
     }
 
     // Memory monitoring
-    if (typeof process.env.ENABLE_MEMORY_MONITOR !== 'undefined') {
+    if (process.env.ENABLE_MEMORY_MONITOR !== undefined) {
       merged.enableMemoryMonitor = process.env.ENABLE_MEMORY_MONITOR === 'true';
     }
 
@@ -119,15 +121,15 @@ class ConfigLoader {
     }
 
     // Boolean settings
-    if (typeof process.env.RANDOMIZE_IMAGE_ORDER !== 'undefined') {
+    if (process.env.RANDOMIZE_IMAGE_ORDER !== undefined) {
       merged.randomizeImageOrder = process.env.RANDOMIZE_IMAGE_ORDER === 'true';
     }
 
-    if (typeof process.env.SHOW_ALL_IMAGES_BEFORE_RESTART !== 'undefined') {
+    if (process.env.SHOW_ALL_IMAGES_BEFORE_RESTART !== undefined) {
       merged.showAllImagesBeforeRestart = process.env.SHOW_ALL_IMAGES_BEFORE_RESTART === 'true';
     }
 
-    if (typeof process.env.RESIZE_IMAGES !== 'undefined') {
+    if (process.env.RESIZE_IMAGES !== undefined) {
       merged.resizeImages = process.env.RESIZE_IMAGES === 'true';
     }
 

@@ -71,7 +71,7 @@ class UIBuilder {
   updateImageInfo (imageInfoDiv, imageinfo, imageDate, translate) {
     const imageProps = [];
 
-    this.config.imageInfo.forEach((prop) => {
+    for (const prop of this.config.imageInfo) {
       switch (prop) {
         case 'date':
           if (imageDate && imageDate !== 'Invalid date') {
@@ -100,12 +100,12 @@ class UIBuilder {
         default:
           Log.warn(`[MMM-SynPhotoSlideshow] ${prop} is not a valid value for imageInfo. Please check your configuration`);
       }
-    });
+    }
 
     let innerHTML = `<header class="infoDivHeader">${translate('PICTURE_INFO')}</header>`;
-    imageProps.forEach((val) => {
+    for (const val of imageProps) {
       innerHTML += `${val}<br/>`;
-    });
+    }
 
     imageInfoDiv.innerHTML = innerHTML;
   }
