@@ -7,7 +7,7 @@
  * MagicMirror² By Michael Teeuw https://michaelteeuw.nl
  * MIT Licensed.
  *
- * Module MMM-SynPhotoSlideshow By Darick Carpenter
+ * Module MMM-SynPhotoSlideshow By Spydersoft Consulting
  * MIT Licensed.
  */
 
