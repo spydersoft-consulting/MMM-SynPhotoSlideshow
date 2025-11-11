@@ -5,10 +5,12 @@ import {flatConfigs as importX} from 'eslint-plugin-import-x';
 import js from '@eslint/js';
 import markdown from '@eslint/markdown';
 import stylistic from '@stylistic/eslint-plugin';
+import tseslint from "typescript-eslint";
+import prettierConfig from "eslint-config-prettier";
 
 export default defineConfig([
   {
-    'ignores': ['coverage/**', '__mocks__/**']
+    'ignores': ['coverage/**', '__mocks__/**', 'output/**', '*.js', '!*.config.js', '!*.config.mjs', 'node_modules/**']
   },
   {
     'files': ['**/*.css'],
@@ -21,9 +23,18 @@ export default defineConfig([
       'css/no-important': 'off'
     }
   },
+  ...tseslint.configs.recommended,
   {
-    'files': ['**/*.js'],
+    'files': ['**/*.ts', '**/*.js'],
     'languageOptions': {
+      parser: tseslint.parser,
+      parserOptions: {
+        sourceType: "module",
+        ecmaVersion: 2017,
+        ecmaFeatures: {
+          globalReturn: true
+        }
+      },
       'globals': {
         ...globals.browser,
         ...globals.node,
@@ -34,7 +45,9 @@ export default defineConfig([
         'Module': 'readonly',
         'TransitionHandler': 'readonly',
         'UIBuilder': 'readonly',
-        'moment': 'readonly'
+        'moment': 'readonly',
+        config: true,
+        MM: true
       }
     },
     'plugins': {js,
@@ -51,6 +64,7 @@ export default defineConfig([
       '@stylistic/padded-blocks': 'off',
       '@stylistic/quote-props': ['error', 'as-needed'],
       '@stylistic/quotes': ['error', 'single'],
+      '@typescript-eslint/no-explicit-any': 'warn',
       'camelcase': 'off',
       'capitalized-comments': 'off',
       'class-methods-use-this': 'off',
@@ -86,8 +100,9 @@ export default defineConfig([
     }
   },
   {
-    'files': ['**/*.test.js'],
+    'files': ['**/*.test.js', '**/*.test.ts'],
     'languageOptions': {
+      parser: tseslint.parser,
       'globals': {
         ...globals.node,
         ...globals.jest
@@ -173,5 +188,6 @@ export default defineConfig([
     'rules': {
       'markdown/fenced-code-language': 'off'
     }
-  }
+  },
+  prettierConfig
 ]);
