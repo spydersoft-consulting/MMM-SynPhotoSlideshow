@@ -311,17 +311,28 @@ class SynologyPhotosClient {
 	private async fetchPhotosByTags(): Promise<PhotoItem[]> {
 		const fetchPromises: Promise<PhotoItem[]>[] = [];
 
+		Log.info(`Fetching photos for tags across spaces: ${JSON.stringify(this.tagIds)}`);
+
 		for (const [spaceKey, tagIdArray] of Object.entries(this.tagIds)) {
-			const spaceId = spaceKey === 'shared' ? null : Number.parseInt(spaceKey, 10);
+			const spaceId = spaceKey === 'shared' ? 1 : Number.parseInt(spaceKey, 10);
+			Log.info(`Processing space ${spaceKey} (ID: ${spaceId}) with ${tagIdArray.length} tag(s)`);
 
 			for (const tagId of tagIdArray) {
 				fetchPromises.push(this.fetchPhotosByTagInSpace(tagId, spaceId));
 			}
 		}
 
+		Log.info(`Created ${fetchPromises.length} fetch promises`);
 		const photoArrays = await Promise.all(fetchPromises);
+		Log.info(`Received ${photoArrays.length} photo arrays: ${photoArrays.map(arr => arr.length).join(', ')} photos each`);
+		
 		const photos = photoArrays.flat();
-		return this.removeDuplicatePhotos(photos);
+		Log.info(`Total photos before deduplication: ${photos.length}`);
+		
+		const deduplicated = this.removeDuplicatePhotos(photos);
+		Log.info(`Total photos after deduplication: ${deduplicated.length}`);
+		
+		return deduplicated;
 	}
 
 	/**
@@ -472,6 +483,8 @@ class SynologyPhotosClient {
 				}
 			}
 
+			Log.info(`Fetching photos for tag ${tagId} in space ${spaceId} with API: ${params.api}`);
+
 			const response = await axios.get(`${this.baseUrl}${this.photosApiPath}`, {
 				params,
 				timeout: 30000
@@ -479,11 +492,13 @@ class SynologyPhotosClient {
 
 			if (response.data.success) {
 				const rawPhotos: SynologyPhoto[] = response.data.data.list;
+				Log.info(`API returned ${rawPhotos.length} photos for tag ${tagId} in space ${spaceId}`);
 				return this.processPhotoList(rawPhotos, spaceId);
 			}
+			Log.warn(`API call failed for tag ${tagId} in space ${spaceId}: ${JSON.stringify(response.data)}`);
 			return [];
 		} catch (error) {
-			Log.error(`Error fetching photos by tag from space ${spaceId}: ${(error as Error).message}`);
+			Log.error(`Error fetching photos by tag ${tagId} from space ${spaceId}: ${(error as Error).message}`);
 			return [];
 		}
 	}
@@ -521,7 +536,11 @@ class SynologyPhotosClient {
 				path: photo.filename || `photo_${photo.id}`,
 				url: imageUrl,
 				created: photo.time ? photo.time * 1000 : Date.now(),
-				modified: photo.indexed_time ? photo.indexed_time * 1000 : Date.now()
+				modified: photo.indexed_time ? photo.indexed_time * 1000 : Date.now(),
+				id: uniqueId,
+				synologyId: photo.id,
+				spaceId: spaceId,
+				isSynology: true
 			} as PhotoItem & { id: number | string; synologyId: number; spaceId: number | null; isSynology: boolean });
 		}
 

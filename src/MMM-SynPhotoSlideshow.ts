@@ -100,7 +100,7 @@ const moduleDefinition: Partial<ModuleInstance> = {
 		imageInfoLocation: 'bottomRight',
 		transitionSpeed: '2s',
 		showProgressBar: false,
-		backgroundSize: 'cover',
+		backgroundSize: 'contain',
 		backgroundPosition: 'center',
 		transitionImages: false,
 		gradient: [
@@ -160,11 +160,7 @@ const moduleDefinition: Partial<ModuleInstance> = {
 	getScripts(this: ModuleInstance): string[] {
 		return [
 			`modules/${this.name}/node_modules/exif-js/exif.js`,
-			'moment.js',
-			this.file('utils/frontend/ConfigValidator.js'),
-			this.file('utils/frontend/ImageHandler.js'),
-			this.file('utils/frontend/UIBuilder.js'),
-			this.file('utils/frontend/TransitionHandler.js')
+			'moment.js'
 		];
 	},
 
@@ -203,16 +199,21 @@ const moduleDefinition: Partial<ModuleInstance> = {
 	},
 
 	socketNotificationReceived(this: ModuleInstance, notification: string, payload: unknown): void {
+		console.log('[MMM-SynPhotoSlideshow] Frontend received notification:', notification, payload);
+		
 		if (notification === 'BACKGROUNDSLIDESHOW_READY') {
 			const typedPayload = payload as { identifier: string };
+			console.log('[MMM-SynPhotoSlideshow] READY notification, identifier match:', typedPayload.identifier === this.identifier);
 			if (typedPayload.identifier === this.identifier) {
 				if (!this.playingVideo) {
 					this.resume();
 				}
 			}
 		} else if (notification === 'BACKGROUNDSLIDESHOW_REGISTER_CONFIG') {
+			console.log('[MMM-SynPhotoSlideshow] Registering config');
 			this.updateImageList();
 		} else if (notification === 'BACKGROUNDSLIDESHOW_PLAY') {
+			console.log('[MMM-SynPhotoSlideshow] PLAY notification');
 			this.updateImage();
 			this.sendSocketNotification('BACKGROUNDSLIDESHOW_PLAY');
 			if (!this.playingVideo) {
@@ -220,6 +221,7 @@ const moduleDefinition: Partial<ModuleInstance> = {
 			}
 		} else if (notification === 'BACKGROUNDSLIDESHOW_DISPLAY_IMAGE') {
 			const typedPayload = payload as ImageInfo;
+			console.log('[MMM-SynPhotoSlideshow] DISPLAY_IMAGE notification, identifier match:', typedPayload.identifier === this.identifier);
 			if (typedPayload.identifier === this.identifier) {
 				this.displayImage(typedPayload);
 			}
@@ -289,20 +291,22 @@ const moduleDefinition: Partial<ModuleInstance> = {
 
 	getDom(this: ModuleInstance): HTMLElement {
 		const wrapper = document.createElement('div');
+		
 		this.imagesDiv = document.createElement('div');
 		this.imagesDiv.className = 'images';
 		wrapper.appendChild(this.imagesDiv);
 
+		// Add gradients INSIDE imagesDiv so they layer properly
 		if (this.config.gradientDirection === 'vertical' || this.config.gradientDirection === 'both') {
-			this.createGradientDiv('bottom', this.config.gradient, wrapper);
+			this.createGradientDiv('bottom', this.config.gradient, this.imagesDiv);
 		}
 
 		if (this.config.gradientDirection === 'horizontal' || this.config.gradientDirection === 'both') {
-			this.createGradientDiv('right', this.config.horizontalGradient, wrapper);
+			this.createGradientDiv('right', this.config.horizontalGradient, this.imagesDiv);
 		}
 
 		if (this.config.gradientDirection === 'radial') {
-			this.createRadialGradientDiv('ellipse at center', this.config.radialGradient, wrapper);
+			this.createRadialGradientDiv('ellipse at center', this.config.radialGradient, this.imagesDiv);
 		}
 
 		if (this.config.showImageInfo) {
@@ -337,6 +341,9 @@ const moduleDefinition: Partial<ModuleInstance> = {
 	},
 
 	displayImage(this: ModuleInstance, imageinfo: ImageInfo): void {
+		Log.info(`[MMM-SynPhotoSlideshow] Frontend displayImage called for: ${imageinfo.path}`);
+		console.log('[MMM-SynPhotoSlideshow] Frontend displayImage called', imageinfo);
+		
 		const mwLc = imageinfo.path.toLowerCase();
 		if (mwLc.endsWith('.mp4') || mwLc.endsWith('.m4v')) {
 			const payload = [imageinfo.path, 'PLAY'];
@@ -348,8 +355,10 @@ const moduleDefinition: Partial<ModuleInstance> = {
 			this.playingVideo = false;
 		}
 
+		console.log('[MMM-SynPhotoSlideshow] Creating image element, src:', imageinfo.data);
 		const image = new Image();
 		image.onload = () => {
+			console.log('[MMM-SynPhotoSlideshow] Image loaded successfully', image.width, 'x', image.height);
 			// Clean up old images
 			if (this.imagesDiv && this.transitionHandler) {
 				this.transitionHandler.cleanupOldImages(this.imagesDiv);
@@ -364,9 +373,14 @@ const moduleDefinition: Partial<ModuleInstance> = {
 			if (!imageDiv) return;
 
 			imageDiv.style.backgroundImage = `url("${image.src}")`;
+			console.log('[MMM-SynPhotoSlideshow] Set backgroundImage on imageDiv');
+			console.log('[MMM-SynPhotoSlideshow] imageDiv classList:', imageDiv.classList.toString());
+			console.log('[MMM-SynPhotoSlideshow] imageDiv backgroundSize:', imageDiv.style.backgroundSize);
 
 			// Apply fit mode (portrait/landscape)
 			const useFitMode = this.imageHandler?.applyFitMode(imageDiv, image) || false;
+			console.log('[MMM-SynPhotoSlideshow] useFitMode:', useFitMode);
+			console.log('[MMM-SynPhotoSlideshow] After fitMode, classList:', imageDiv.classList.toString());
 
 			// Restart progress bar if enabled
 			if (this.config.showProgressBar) {
@@ -403,9 +417,30 @@ const moduleDefinition: Partial<ModuleInstance> = {
 
 			transitionDiv.appendChild(imageDiv);
 			this.imagesDiv?.appendChild(transitionDiv);
+			console.log('[MMM-SynPhotoSlideshow] Image appended to DOM');
+			console.log('[MMM-SynPhotoSlideshow] imagesDiv children count:', this.imagesDiv?.children.length);
+			console.log('[MMM-SynPhotoSlideshow] imagesDiv styles:', {
+				position: this.imagesDiv?.style.position,
+				width: this.imagesDiv?.style.width,
+				height: this.imagesDiv?.style.height,
+				zIndex: this.imagesDiv?.style.zIndex
+			});
+			
+			// Check if there are gradient divs blocking the view
+			const wrapper = this.imagesDiv?.parentElement;
+			if (wrapper) {
+				console.log('[MMM-SynPhotoSlideshow] Wrapper children count:', wrapper.children.length);
+				console.log('[MMM-SynPhotoSlideshow] Wrapper children types:', Array.from(wrapper.children).map(c => c.className));
+			}
+		};
+
+		image.onerror = (error) => {
+			console.error('[MMM-SynPhotoSlideshow] Image failed to load:', imageinfo.data, error);
+			Log.error(`[MMM-SynPhotoSlideshow] Image failed to load: ${imageinfo.data}`);
 		};
 
 		image.src = imageinfo.data;
+		console.log('[MMM-SynPhotoSlideshow] Image src set to:', imageinfo.data);
 		this.sendSocketNotification('BACKGROUNDSLIDESHOW_IMAGE_UPDATED', {
 			url: imageinfo.path
 		});
@@ -454,15 +489,33 @@ const moduleDefinition: Partial<ModuleInstance> = {
 		}
 	},
 
+	suspend(this: ModuleInstance): void {
+		console.log('[MMM-SynPhotoSlideshow] Frontend suspend called');
+		if (this.timer) {
+			clearTimeout(this.timer);
+			this.timer = null;
+		}
+	},
+
 	resume(this: ModuleInstance): void {
+		console.log('[MMM-SynPhotoSlideshow] Frontend resume called');
 		this.suspend();
 
 		if (this.config.changeImageOnResume) {
 			this.updateImage();
 		}
+
+		// Set timer for next image
+		this.timer = setTimeout(() => {
+			this.updateImage();
+			if (!this.playingVideo) {
+				this.resume();
+			}
+		}, this.config.slideshowSpeed);
 	},
 
 	updateImageList(this: ModuleInstance): void {
+		console.log('[MMM-SynPhotoSlideshow] Frontend updateImageList called');
 		this.suspend();
 		Log.debug('[MMM-SynPhotoSlideshow] Getting images');
 		this.sendSocketNotification('BACKGROUNDSLIDESHOW_REGISTER_CONFIG', this.config);

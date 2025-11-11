@@ -45,22 +45,14 @@ class ImageHandler {
 		const isPortrait = image.height > image.width;
 		const screenAspectRatio = window.innerWidth / window.innerHeight;
 
-		// If it's a portrait image on a landscape screen
+		// If it's a portrait image on a landscape screen, use contain to avoid cropping
 		if (isPortrait && screenAspectRatio > 1) {
 			imageDiv.classList.add('portrait-mode');
 			console.debug(`[MMM-SynPhotoSlideshow] Portrait image detected (${image.width}x${image.height}), using contain mode`);
 			return true;
 		}
 
-		if (!isPortrait) {
-			// All landscape images - use full width with black bars on top/bottom
-			imageDiv.classList.add('landscape-mode');
-			console.debug(
-				`[MMM-SynPhotoSlideshow] Landscape image detected (${image.width}x${image.height}), using contain with letterbox`
-			);
-			return true;
-		}
-
+		// For all other cases (landscape images or portrait screen), use cover to fill screen
 		return false;
 	}
 

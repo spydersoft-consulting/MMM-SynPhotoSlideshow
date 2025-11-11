@@ -86,19 +86,19 @@ const helperModule: Partial<HelperModule> = {
 		}
 	},
 
-	getNextImage(): void {
+	async getNextImage(): Promise<void> {
 		Log.info('Getting next image...');
 
 		if (!this.imageListManager || this.imageListManager.isEmpty()) {
 			Log.info('Image list empty, loading images...');
 			if (this.config) {
-				void this.gatherImageList(this.config);
+				await this.gatherImageList(this.config);
 			}
 
 			if (this.imageListManager.isEmpty()) {
 				Log.warn('No images available, retrying in 10 minutes');
 				setTimeout(() => {
-					this.getNextImage();
+					void this.getNextImage();
 				}, 600000);
 				return;
 			}
@@ -131,7 +131,7 @@ const helperModule: Partial<HelperModule> = {
 
 		const slideshowSpeed = this.config?.slideshowSpeed || 10000;
 		this.timerManager.startSlideshowTimer(() => {
-			this.getNextImage();
+			void this.getNextImage();
 		}, slideshowSpeed);
 
 		if (this.config?.showAllImagesBeforeRestart) {
@@ -171,7 +171,7 @@ const helperModule: Partial<HelperModule> = {
 		if (this.imageListManager) {
 			this.imageListManager.getPreviousImage();
 		}
-		this.getNextImage();
+		void this.getNextImage();
 	},
 
 	socketNotificationReceived(notification: string, payload: unknown): void {
@@ -201,8 +201,9 @@ const helperModule: Partial<HelperModule> = {
 			this.imageProcessor = new ImageProcessor(config, this.imageCache);
 
 			setTimeout(() => {
-				void this.gatherImageList(config, true);
-				this.getNextImage();
+				void this.gatherImageList(config, true).then(() => {
+					void this.getNextImage();
+				});
 
 				const refreshInterval = config?.refreshImageListInterval || 60 * 60 * 1000;
 				this.timerManager.startRefreshTimer(() => {
@@ -218,7 +219,7 @@ const helperModule: Partial<HelperModule> = {
 			});
 		} else if (notification === 'BACKGROUNDSLIDESHOW_NEXT_IMAGE') {
 			Log.debug('BACKGROUNDSLIDESHOW_NEXT_IMAGE');
-			this.getNextImage();
+			void this.getNextImage();
 		} else if (notification === 'BACKGROUNDSLIDESHOW_PREV_IMAGE') {
 			Log.debug('BACKGROUNDSLIDESHOW_PREV_IMAGE');
 			this.getPrevImage();
@@ -227,7 +228,7 @@ const helperModule: Partial<HelperModule> = {
 		} else if (notification === 'BACKGROUNDSLIDESHOW_PLAY') {
 			const slideshowSpeed = this.config?.slideshowSpeed || 10000;
 			this.timerManager?.startSlideshowTimer(() => {
-				this.getNextImage();
+				void this.getNextImage();
 			}, slideshowSpeed);
 
 			const refreshInterval = this.config?.refreshImageListInterval || 60 * 60 * 1000;
