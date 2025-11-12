@@ -46,13 +46,7 @@ cd MMM-SynPhotoSlideshow
 npm install
 ```
 
-**For production use** (to save disk space and exclude development tools):
-
-```sh
-npm run install:prod
-```
-
-This installs only the runtime dependencies (axios, dotenv, exif-js, node-cache, sharp) and excludes development dependencies like linters and test frameworks.
+The `npm install` command will automatically build the module from TypeScript sources. This requires installing all dependencies (including development tools like TypeScript and Rollup) to compile the source code into the JavaScript files needed by MagicMirror.
 
 ### Basic Configuration
 
@@ -727,4 +721,4 @@ That's it!
 - `npm test` - Run unit tests.
 - `npm run test:watch` - Run tests in watch mode.
 - `npm run test:coverage` - Run tests with coverage report.
-- `npm run install:prod` - Install only production dependencies (excludes dev dependencies like linters and test frameworks).
+- `npm run build` - Build the module from TypeScript sources (runs automatically after `npm install`).

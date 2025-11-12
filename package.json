@@ -52,7 +52,7 @@
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-import-x": "^4.16.1",
-    "eslint-plugin-sonarjs": "^2.0.4",
+    "eslint-plugin-sonarjs": "^3.0.5",
     "globals": "^16.5.0",
     "husky": "^9.1.6",
     "identity-obj-proxy": "^3.0.0",
@@ -79,8 +79,7 @@
     "postinstall": "npm run build",
     "build": "rollup -c",
     "dev": "rollup -c --sourcemap=inline",
-    "watch": "npm run dev -- --watch",
-    "install:prod": "npm install --omit=dev"
+    "watch": "npm run dev -- --watch"
   },
   "lint-staged": {
     "*.{js,mjs,ts,css}": [
