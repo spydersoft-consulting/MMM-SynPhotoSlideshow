@@ -181,99 +181,190 @@ export default class ModuleController {
       payload
     );
 
-    if (notification === 'BACKGROUNDSLIDESHOW_READY') {
-      const typedPayload = payload as { identifier: string };
-      this.Log.log(
-        '[MMM-SynPhotoSlideshow] READY notification, identifier match:',
-        typedPayload.identifier === this.identifier
-      );
-      if (typedPayload.identifier === this.identifier) {
-        if (!this.playingVideo) {
-          this.resume();
-        }
-      }
-    } else if (notification === 'BACKGROUNDSLIDESHOW_REGISTER_CONFIG') {
-      this.Log.log('[MMM-SynPhotoSlideshow] Registering config');
-      this.updateImageList();
-    } else if (notification === 'BACKGROUNDSLIDESHOW_PLAY') {
-      this.Log.log('[MMM-SynPhotoSlideshow] PLAY notification');
-      this.updateImage();
-      this.callbacks.sendSocketNotification('BACKGROUNDSLIDESHOW_PLAY');
-      if (!this.playingVideo) {
+    const handlers: Record<string, () => void> = {
+      BACKGROUNDSLIDESHOW_READY: () => this.handleReady(payload),
+      BACKGROUNDSLIDESHOW_REGISTER_CONFIG: () => this.handleRegisterConfig(),
+      BACKGROUNDSLIDESHOW_PLAY: () => this.handlePlay(),
+      BACKGROUNDSLIDESHOW_DISPLAY_IMAGE: () => this.handleDisplayImage(payload),
+      BACKGROUNDSLIDESHOW_FILELIST: () => this.handleFileList(payload),
+      BACKGROUNDSLIDESHOW_UPDATE_IMAGE_LIST: () => this.handleUpdateImageList(),
+      BACKGROUNDSLIDESHOW_IMAGE_UPDATE: () => this.handleImageUpdate(),
+      BACKGROUNDSLIDESHOW_NEXT: () => this.handleNext(),
+      BACKGROUNDSLIDESHOW_PREVIOUS: () => this.handlePrevious(),
+      BACKGROUNDSLIDESHOW_PAUSE: () => this.handlePause(),
+      BACKGROUNDSLIDESHOW_URL: () => this.handleUrl(payload),
+      BACKGROUNDSLIDESHOW_URLS: () => this.handleUrls(payload)
+    };
+
+    const handler = handlers[notification];
+    if (handler) {
+      handler();
+    }
+  }
+
+  /**
+   * Handle READY notification
+   */
+  private handleReady(payload: unknown): void {
+    const typedPayload = payload as { identifier: string };
+    this.Log.log(
+      '[MMM-SynPhotoSlideshow] READY notification, identifier match:',
+      typedPayload.identifier === this.identifier
+    );
+    if (typedPayload.identifier === this.identifier && !this.playingVideo) {
+      this.resume();
+    }
+  }
+
+  /**
+   * Handle REGISTER_CONFIG notification
+   */
+  private handleRegisterConfig(): void {
+    this.Log.log('[MMM-SynPhotoSlideshow] Registering config');
+    this.updateImageList();
+  }
+
+  /**
+   * Handle PLAY notification
+   */
+  private handlePlay(): void {
+    this.Log.log('[MMM-SynPhotoSlideshow] PLAY notification');
+    this.updateImage();
+    this.callbacks.sendSocketNotification('BACKGROUNDSLIDESHOW_PLAY');
+    if (!this.playingVideo) {
+      this.resume();
+    }
+  }
+
+  /**
+   * Handle DISPLAY_IMAGE notification
+   */
+  private handleDisplayImage(payload: unknown): void {
+    const typedPayload = payload as ImageInfo;
+    this.Log.log(
+      '[MMM-SynPhotoSlideshow] DISPLAY_IMAGE notification, identifier match:',
+      typedPayload.identifier === this.identifier
+    );
+    if (typedPayload.identifier === this.identifier) {
+      this.displayImage(typedPayload);
+    }
+  }
+
+  /**
+   * Handle FILELIST notification
+   */
+  private handleFileList(payload: unknown): void {
+    this.callbacks.sendNotification('BACKGROUNDSLIDESHOW_FILELIST', payload);
+  }
+
+  /**
+   * Handle UPDATE_IMAGE_LIST notification
+   */
+  private handleUpdateImageList(): void {
+    this.imageIndex = -1;
+    this.updateImageList();
+    this.updateImage();
+  }
+
+  /**
+   * Handle IMAGE_UPDATE notification
+   */
+  private handleImageUpdate(): void {
+    this.Log.log('[MMM-SynPhotoSlideshow] Changing Background');
+    this.suspend();
+    this.updateImage();
+    if (!this.playingVideo) {
+      this.resume();
+    }
+  }
+
+  /**
+   * Handle NEXT notification
+   */
+  private handleNext(): void {
+    this.updateImage();
+    if (this.timer && !this.playingVideo) {
+      this.resume();
+    }
+  }
+
+  /**
+   * Handle PREVIOUS notification
+   */
+  private handlePrevious(): void {
+    this.updateImage(true);
+    if (this.timer && !this.playingVideo) {
+      this.resume();
+    }
+  }
+
+  /**
+   * Handle PAUSE notification
+   */
+  private handlePause(): void {
+    this.callbacks.sendSocketNotification('BACKGROUNDSLIDESHOW_PAUSE');
+  }
+
+  /**
+   * Handle URL notification
+   */
+  private handleUrl(payload: unknown): void {
+    const typedPayload = payload as { url?: string; resume?: boolean };
+    if (!typedPayload?.url) return;
+
+    if (typedPayload.resume) {
+      if (this.timer) {
         this.resume();
       }
-    } else if (notification === 'BACKGROUNDSLIDESHOW_DISPLAY_IMAGE') {
-      const typedPayload = payload as ImageInfo;
-      this.Log.log(
-        '[MMM-SynPhotoSlideshow] DISPLAY_IMAGE notification, identifier match:',
-        typedPayload.identifier === this.identifier
-      );
-      if (typedPayload.identifier === this.identifier) {
-        this.displayImage(typedPayload);
-      }
-    } else if (notification === 'BACKGROUNDSLIDESHOW_FILELIST') {
-      this.callbacks.sendNotification('BACKGROUNDSLIDESHOW_FILELIST', payload);
-    } else if (notification === 'BACKGROUNDSLIDESHOW_UPDATE_IMAGE_LIST') {
-      this.imageIndex = -1;
-      this.updateImageList();
-      this.updateImage();
-    } else if (notification === 'BACKGROUNDSLIDESHOW_IMAGE_UPDATE') {
-      this.Log.log('[MMM-SynPhotoSlideshow] Changing Background');
+    } else {
       this.suspend();
-      this.updateImage();
-      if (!this.playingVideo) {
-        this.resume();
+    }
+    this.updateImage(false, typedPayload.url);
+  }
+
+  /**
+   * Handle URLS notification
+   */
+  private handleUrls(payload: unknown): void {
+    this.Log.log(
+      `[MMM-SynPhotoSlideshow] Notification Received: BACKGROUNDSLIDESHOW_URLS. Payload: ${JSON.stringify(payload)}`
+    );
+    const typedPayload = payload as { urls?: string[] };
+
+    if (typedPayload?.urls?.length) {
+      this.handleUrlsWithImages(typedPayload.urls);
+    } else if (this.savedImages) {
+      this.restoreSavedImages();
+    }
+  }
+
+  /**
+   * Handle URLS notification when URLs are provided
+   */
+  private handleUrlsWithImages(urls: string[]): void {
+    if (this.savedImages) {
+      const temp = [...new Set([...urls, ...this.imageList])];
+      if (temp.length !== urls.length) {
+        this.updateImageListWithArray(urls);
       }
-    } else if (notification === 'BACKGROUNDSLIDESHOW_NEXT') {
-      this.updateImage();
-      if (this.timer && !this.playingVideo) {
-        this.resume();
-      }
-    } else if (notification === 'BACKGROUNDSLIDESHOW_PREVIOUS') {
-      this.updateImage(true);
-      if (this.timer && !this.playingVideo) {
-        this.resume();
-      }
-    } else if (notification === 'BACKGROUNDSLIDESHOW_PAUSE') {
-      this.callbacks.sendSocketNotification('BACKGROUNDSLIDESHOW_PAUSE');
-    } else if (notification === 'BACKGROUNDSLIDESHOW_URL') {
-      const typedPayload = payload as { url?: string; resume?: boolean };
-      if (typedPayload?.url) {
-        if (typedPayload.resume) {
-          if (this.timer) {
-            this.resume();
-          }
-        } else {
-          this.suspend();
-        }
-        this.updateImage(false, typedPayload.url);
-      }
-    } else if (notification === 'BACKGROUNDSLIDESHOW_URLS') {
-      this.Log.log(
-        `[MMM-SynPhotoSlideshow] Notification Received: BACKGROUNDSLIDESHOW_URLS. Payload: ${JSON.stringify(payload)}`
-      );
-      const typedPayload = payload as { urls?: string[] };
-      if (typedPayload?.urls?.length) {
-        if (this.savedImages) {
-          const temp = [...new Set([...typedPayload.urls, ...this.imageList])];
-          if (temp.length !== typedPayload.urls.length) {
-            this.updateImageListWithArray(typedPayload.urls);
-          }
-        } else {
-          this.savedImages = this.imageList;
-          this.savedIndex = this.imageIndex;
-          this.updateImageListWithArray(typedPayload.urls);
-        }
-      } else if (this.savedImages) {
-        this.imageList = this.savedImages;
-        this.imageIndex = this.savedIndex || 0;
-        this.savedImages = null;
-        this.savedIndex = null;
-        this.updateImage();
-        if (this.timer && !this.playingVideo) {
-          this.resume();
-        }
-      }
+    } else {
+      this.savedImages = this.imageList;
+      this.savedIndex = this.imageIndex;
+      this.updateImageListWithArray(urls);
+    }
+  }
+
+  /**
+   * Restore saved images
+   */
+  private restoreSavedImages(): void {
+    this.imageList = this.savedImages!;
+    this.imageIndex = this.savedIndex || 0;
+    this.savedImages = null;
+    this.savedIndex = null;
+    this.updateImage();
+    if (this.timer && !this.playingVideo) {
+      this.resume();
     }
   }
 

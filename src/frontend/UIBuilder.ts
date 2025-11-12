@@ -91,52 +91,108 @@ class UIBuilder {
     imageDate: string,
     translate: (key: string) => string
   ): void {
-    const imageProps: string[] = [];
-
     const imageInfoArray = Array.isArray(this.config.imageInfo)
       ? this.config.imageInfo
       : [this.config.imageInfo];
 
-    for (const prop of imageInfoArray) {
-      switch (prop) {
-        case 'date':
-          if (imageDate && imageDate !== 'Invalid date') {
-            imageProps.push(imageDate);
-          }
-          break;
+    const imageProps = this.collectImageProperties(
+      imageInfoArray,
+      imageinfo,
+      imageDate
+    );
+    const innerHTML = this.buildImageInfoHtml(imageProps, translate);
 
-        case 'name': {
-          // Only display last path component as image name
-          let imageName = imageinfo.path.split('/').pop() || '';
+    imageInfoDiv.innerHTML = innerHTML;
+  }
 
-          // Remove file extension from image name
-          if (this.config.imageInfoNoFileExt) {
-            const dotIndex = imageName.lastIndexOf('.');
-            if (dotIndex > 0) {
-              imageName = imageName.substring(0, dotIndex);
-            }
-          }
-          imageProps.push(imageName);
-          break;
-        }
+  /**
+   * Collect image properties based on configuration
+   */
+  private collectImageProperties(
+    infoArray: string[],
+    imageinfo: ImageInfo,
+    imageDate: string
+  ): string[] {
+    const props: string[] = [];
 
-        case 'imagecount':
-          imageProps.push(`${imageinfo.index} of ${imageinfo.total}`);
-          break;
-
-        default:
-          Log.warn(
-            `[MMM-SynPhotoSlideshow] ${prop} is not a valid value for imageInfo. Please check your configuration`
-          );
+    for (const prop of infoArray) {
+      const value = this.getImageProperty(prop, imageinfo, imageDate);
+      if (value) {
+        props.push(value);
       }
     }
 
-    let innerHTML = `<header class="infoDivHeader">${translate('PICTURE_INFO')}</header>`;
-    for (const val of imageProps) {
-      innerHTML += `${val}<br/>`;
+    return props;
+  }
+
+  /**
+   * Get a single image property value
+   */
+  private getImageProperty(
+    prop: string,
+    imageinfo: ImageInfo,
+    imageDate: string
+  ): string | null {
+    switch (prop) {
+      case 'date':
+        return this.getDateProperty(imageDate);
+
+      case 'name':
+        return this.getNameProperty(imageinfo.path);
+
+      case 'imagecount':
+        return `${imageinfo.index} of ${imageinfo.total}`;
+
+      default:
+        Log.warn(
+          `[MMM-SynPhotoSlideshow] ${prop} is not a valid value for imageInfo. Please check your configuration`
+        );
+        return null;
+    }
+  }
+
+  /**
+   * Get formatted date property
+   */
+  private getDateProperty(imageDate: string): string | null {
+    if (imageDate && imageDate !== 'Invalid date') {
+      return imageDate;
+    }
+    return null;
+  }
+
+  /**
+   * Get formatted name property
+   */
+  private getNameProperty(imagePath: string): string {
+    // Only display last path component as image name
+    let imageName = imagePath.split('/').pop() || '';
+
+    // Remove file extension from image name if configured
+    if (this.config.imageInfoNoFileExt) {
+      const dotIndex = imageName.lastIndexOf('.');
+      if (dotIndex > 0) {
+        imageName = imageName.substring(0, dotIndex);
+      }
     }
 
-    imageInfoDiv.innerHTML = innerHTML;
+    return imageName;
+  }
+
+  /**
+   * Build HTML string for image info display
+   */
+  private buildImageInfoHtml(
+    imageProps: string[],
+    translate: (key: string) => string
+  ): string {
+    let html = `<header class="infoDivHeader">${translate('PICTURE_INFO')}</header>`;
+
+    for (const val of imageProps) {
+      html += `${val}<br/>`;
+    }
+
+    return html;
   }
 }
 
