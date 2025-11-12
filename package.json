@@ -79,8 +79,7 @@
     "postinstall": "npm run build",
     "build": "rollup -c",
     "dev": "rollup -c --sourcemap=inline",
-    "watch": "npm run dev -- --watch",
-    "install:prod": "npm install --omit=dev"
+    "watch": "npm run dev -- --watch"
   },
   "lint-staged": {
     "*.{js,mjs,ts,css}": [
