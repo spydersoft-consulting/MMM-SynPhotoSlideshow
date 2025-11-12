@@ -17,7 +17,7 @@ class TimerManager {
   stopSlideshowTimer(): void {
     if (this.slideshowTimer) {
       const now = new Date().toISOString();
-      Log.info(`Stopping slideshow timer at ${now}`);
+      Log.debug(`Stopping slideshow timer at ${now}`);
       clearTimeout(this.slideshowTimer);
       this.slideshowTimer = null;
     }
@@ -31,13 +31,13 @@ class TimerManager {
 
     const now = new Date().toISOString();
     const seconds = (interval / 1000).toFixed(1);
-    Log.info(
+    Log.debug(
       `Starting slideshow timer at ${now} with interval: ${interval}ms (${seconds}s)`
     );
 
     this.slideshowTimer = setTimeout(() => {
       const triggerTime = new Date().toISOString();
-      Log.info(`Slideshow timer triggered at ${triggerTime}`);
+      Log.debug(`Slideshow timer triggered at ${triggerTime}`);
       callback();
     }, interval);
   }
@@ -48,32 +48,32 @@ class TimerManager {
   stopRefreshTimer(): void {
     if (this.refreshTimer) {
       const now = new Date().toISOString();
-      Log.info(`Stopping refresh timer at ${now}`);
+      Log.debug(`Stopping refresh timer at ${now}`);
       clearTimeout(this.refreshTimer);
       this.refreshTimer = null;
     }
   }
 
   /**
-   * Start refresh timer
+   * Start or restart refresh timer
    */
   startRefreshTimer(callback: () => void, interval: number): void {
     this.stopRefreshTimer();
 
     if (interval <= 0) {
-      Log.info('Refresh timer disabled (interval <= 0)');
+      Log.debug('Refresh timer disabled (interval <= 0)');
       return;
     }
 
     const now = new Date().toISOString();
     const minutes = Math.round(interval / 60000);
-    Log.info(
+    Log.debug(
       `Starting refresh timer at ${now} with interval: ${interval}ms (${minutes} minutes)`
     );
 
     this.refreshTimer = setTimeout(() => {
       const triggerTime = new Date().toISOString();
-      Log.info(`Refresh timer triggered at ${triggerTime}`);
+      Log.debug(`Refresh timer triggered at ${triggerTime}`);
       callback();
     }, interval);
   }

@@ -404,7 +404,7 @@ describe('ImageProcessor', () => {
         }
       ).downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
 
-      expect(Log.info).toHaveBeenCalledWith('Serving image from cache');
+      expect(Log.debug).toHaveBeenCalledWith('Serving image from cache');
       expect(mockCallback).toHaveBeenCalledWith(cachedData);
       expect(mockSynologyClient.downloadPhoto).not.toHaveBeenCalled();
     });
@@ -464,7 +464,7 @@ describe('ImageProcessor', () => {
         }
       ).downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
 
-      expect(Log.info).toHaveBeenCalledWith('Downloading Synology image...');
+      expect(Log.debug).toHaveBeenCalledWith('Downloading Synology image...');
       expect(mockSynologyClient.downloadPhoto).toHaveBeenCalledWith(imageUrl);
     });
 
@@ -504,7 +504,7 @@ describe('ImageProcessor', () => {
         }
       ).downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
 
-      expect(Log.info).toHaveBeenCalledWith(
+      expect(Log.debug).toHaveBeenCalledWith(
         `Downloaded Synology image: ${imageBuffer.length} bytes`
       );
     });

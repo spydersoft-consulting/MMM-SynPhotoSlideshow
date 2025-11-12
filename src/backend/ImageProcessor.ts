@@ -93,19 +93,19 @@ class ImageProcessor {
         const cached = await this.imageCache.get(imageUrl);
 
         if (cached) {
-          Log.info('Serving image from cache');
+          Log.debug('Serving image from cache');
           callback(cached);
           return;
         }
       }
 
-      Log.info('Downloading Synology image...');
+      Log.debug('Downloading Synology image...');
       const imageBuffer = await synologyClient.downloadPhoto(imageUrl);
 
       if (imageBuffer) {
         const base64 = imageBuffer.toString('base64');
         const dataUrl = `data:image/jpeg;base64,${base64}`;
-        Log.info(`Downloaded Synology image: ${imageBuffer.length} bytes`);
+        Log.debug(`Downloaded Synology image: ${imageBuffer.length} bytes`);
 
         if (this.imageCache && this.config.enableImageCache) {
           await this.imageCache.set(imageUrl, dataUrl);

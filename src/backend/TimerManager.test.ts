@@ -59,7 +59,7 @@ describe('TimerManager', () => {
       manager.stopSlideshowTimer();
 
       expect(global.clearTimeout).not.toHaveBeenCalled();
-      expect(Log.info).not.toHaveBeenCalled();
+      expect(Log.debug).not.toHaveBeenCalled();
     });
 
     it('should clear timer if running', () => {
@@ -89,7 +89,7 @@ describe('TimerManager', () => {
 
       manager.stopSlideshowTimer();
 
-      expect(Log.info).toHaveBeenCalledWith(
+      expect(Log.debug).toHaveBeenCalledWith(
         'Stopping slideshow timer at 2025-11-09T10:00:02.000Z'
       );
     });
@@ -132,7 +132,7 @@ describe('TimerManager', () => {
 
       manager.startSlideshowTimer(callback, 5000);
 
-      expect(Log.info).toHaveBeenCalledWith(
+      expect(Log.debug).toHaveBeenCalledWith(
         'Starting slideshow timer at 2025-11-09T10:00:01.000Z with interval: 5000ms (5.0s)'
       );
     });
@@ -142,7 +142,7 @@ describe('TimerManager', () => {
 
       manager.startSlideshowTimer(callback, 12345);
 
-      expect(Log.info).toHaveBeenCalledWith(
+      expect(Log.debug).toHaveBeenCalledWith(
         expect.stringContaining('12345ms (12.3s)')
       );
     });
@@ -188,7 +188,7 @@ describe('TimerManager', () => {
 
       timerCallback?.();
 
-      expect(Log.info).toHaveBeenCalledWith(
+      expect(Log.debug).toHaveBeenCalledWith(
         'Slideshow timer triggered at 2025-11-09T10:00:02.000Z'
       );
     });
@@ -199,7 +199,7 @@ describe('TimerManager', () => {
       manager.stopRefreshTimer();
 
       expect(global.clearTimeout).not.toHaveBeenCalled();
-      expect(Log.info).not.toHaveBeenCalled();
+      expect(Log.debug).not.toHaveBeenCalled();
     });
 
     it('should clear timer if running', () => {
@@ -229,7 +229,7 @@ describe('TimerManager', () => {
 
       manager.stopRefreshTimer();
 
-      expect(Log.info).toHaveBeenCalledWith(
+      expect(Log.debug).toHaveBeenCalledWith(
         'Stopping refresh timer at 2025-11-09T10:00:02.000Z'
       );
     });
@@ -269,7 +269,7 @@ describe('TimerManager', () => {
 
       manager.startRefreshTimer(callback, 0);
 
-      expect(Log.info).toHaveBeenCalledWith(
+      expect(Log.debug).toHaveBeenCalledWith(
         'Refresh timer disabled (interval <= 0)'
       );
     });
@@ -300,7 +300,7 @@ describe('TimerManager', () => {
 
       manager.startRefreshTimer(callback, 60000);
 
-      expect(Log.info).toHaveBeenCalledWith(
+      expect(Log.debug).toHaveBeenCalledWith(
         'Starting refresh timer at 2025-11-09T10:00:01.000Z with interval: 60000ms (1 minutes)'
       );
     });
@@ -310,7 +310,7 @@ describe('TimerManager', () => {
 
       manager.startRefreshTimer(callback, 125000);
 
-      expect(Log.info).toHaveBeenCalledWith(
+      expect(Log.debug).toHaveBeenCalledWith(
         expect.stringContaining('125000ms (2 minutes)')
       );
     });
@@ -356,7 +356,7 @@ describe('TimerManager', () => {
 
       timerCallback?.();
 
-      expect(Log.info).toHaveBeenCalledWith(
+      expect(Log.debug).toHaveBeenCalledWith(
         'Refresh timer triggered at 2025-11-09T10:00:02.000Z'
       );
     });
@@ -568,7 +568,7 @@ describe('TimerManager', () => {
 
       expect(manager.isRefreshTimerRunning()).toBe(false);
       expect(global.setTimeout).not.toHaveBeenCalled();
-      expect(Log.info).toHaveBeenCalledWith(
+      expect(Log.debug).toHaveBeenCalledWith(
         'Refresh timer disabled (interval <= 0)'
       );
     });
@@ -591,20 +591,20 @@ describe('TimerManager', () => {
       manager.stopSlideshowTimer();
       manager.stopRefreshTimer();
 
-      expect(Log.info).toHaveBeenCalledTimes(4);
-      expect(Log.info).toHaveBeenNthCalledWith(
+      expect(Log.debug).toHaveBeenCalledTimes(4);
+      expect(Log.debug).toHaveBeenNthCalledWith(
         1,
         expect.stringContaining('Starting slideshow timer')
       );
-      expect(Log.info).toHaveBeenNthCalledWith(
+      expect(Log.debug).toHaveBeenNthCalledWith(
         2,
         expect.stringContaining('Starting refresh timer')
       );
-      expect(Log.info).toHaveBeenNthCalledWith(
+      expect(Log.debug).toHaveBeenNthCalledWith(
         3,
         expect.stringContaining('Stopping slideshow timer')
       );
-      expect(Log.info).toHaveBeenNthCalledWith(
+      expect(Log.debug).toHaveBeenNthCalledWith(
         4,
         expect.stringContaining('Stopping refresh timer')
       );
