@@ -1,11 +1,12 @@
 /**
- * UIBuilder.test.js
+ * UIBuilder.test.ts
  *
  * Unit tests for UIBuilder
  * @jest-environment jsdom
  */
 
-const UIBuilder = require('./UIBuilder');
+import UIBuilder from './UIBuilder';
+import type { ImageInfo, ModuleConfig } from '../types';
 
 // Mock Log for updateImageInfo
 global.Log = {
@@ -13,25 +14,30 @@ global.Log = {
 };
 
 // Helper function to create mock image info
-const createMockImageInfo = (overrides = {}) => ({
-  path: '/path/to/image.jpg',
-  index: 5,
-  total: 20,
-  ...overrides
-});
+const createMockImageInfo = (overrides: Partial<ImageInfo> = {}): ImageInfo =>
+  ({
+    identifier: '',
+    path: '/path/to/image.jpg',
+    data: '',
+    index: 5,
+    total: 20,
+    width: 1920,
+    height: 1080,
+    ...overrides
+  }) as ImageInfo;
 
 // Helper function to create mock translate
-const createMockTranslate = (translations = {}) => {
-  const defaults = {
+const createMockTranslate = (translations: Record<string, string> = {}) => {
+  const defaults: Record<string, string> = {
     PICTURE_INFO: 'Picture Information'
   };
-  return (key) => translations[key] || defaults[key] || key;
+  return (key: string) => translations[key] || defaults[key] || key;
 };
 
 describe('UIBuilder', () => {
-  let builder;
-  let mockConfig;
-  let wrapper;
+  let builder: UIBuilder;
+  let mockConfig: Partial<ModuleConfig>;
+  let wrapper: HTMLDivElement;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -42,7 +48,7 @@ describe('UIBuilder', () => {
       imageInfoNoFileExt: false
     };
 
-    builder = new UIBuilder(mockConfig);
+    builder = new UIBuilder(mockConfig as ModuleConfig);
     wrapper = document.createElement('div');
   });
 
@@ -52,7 +58,7 @@ describe('UIBuilder', () => {
     });
 
     it('should handle empty config', () => {
-      const emptyBuilder = new UIBuilder({});
+      const emptyBuilder = new UIBuilder({} as ModuleConfig);
 
       expect(emptyBuilder.config).toEqual({});
     });
@@ -66,7 +72,7 @@ describe('UIBuilder', () => {
 
       const gradientDiv = wrapper.querySelector('.gradient');
       expect(gradientDiv).not.toBeNull();
-      expect(gradientDiv.className).toBe('gradient');
+      expect(gradientDiv?.className).toBe('gradient');
     });
 
     it('should apply linear gradient with direction', () => {
@@ -74,8 +80,10 @@ describe('UIBuilder', () => {
 
       builder.createGradientDiv('bottom', gradient, wrapper);
 
-      const gradientDiv = wrapper.querySelector('.gradient');
-      expect(gradientDiv.style.backgroundImage).toBe('linear-gradient( to bottom, rgba(0,0,0,0.5),rgba(0,0,0,0))');
+      const gradientDiv = wrapper.querySelector('.gradient') as HTMLDivElement;
+      expect(gradientDiv.style.backgroundImage).toBe(
+        'linear-gradient( to bottom, rgba(0,0,0,0.5),rgba(0,0,0,0))'
+      );
     });
 
     it('should handle multiple gradient colors', () => {
@@ -83,8 +91,10 @@ describe('UIBuilder', () => {
 
       builder.createGradientDiv('top', gradient, wrapper);
 
-      const gradientDiv = wrapper.querySelector('.gradient');
-      expect(gradientDiv.style.backgroundImage).toBe('linear-gradient( to top, red,yellow,green,blue)');
+      const gradientDiv = wrapper.querySelector('.gradient') as HTMLDivElement;
+      expect(gradientDiv.style.backgroundImage).toBe(
+        'linear-gradient( to top, red,yellow,green,blue)'
+      );
     });
 
     it('should append to wrapper', () => {
@@ -101,13 +111,13 @@ describe('UIBuilder', () => {
       const gradient = ['black', 'white'];
 
       builder.createGradientDiv('left', gradient, wrapper);
-      const leftDiv = wrapper.querySelector('.gradient');
+      const leftDiv = wrapper.querySelector('.gradient') as HTMLDivElement;
       expect(leftDiv.style.backgroundImage).toContain('to left');
 
       wrapper.innerHTML = '';
 
       builder.createGradientDiv('right', gradient, wrapper);
-      const rightDiv = wrapper.querySelector('.gradient');
+      const rightDiv = wrapper.querySelector('.gradient') as HTMLDivElement;
       expect(rightDiv.style.backgroundImage).toContain('to right');
     });
 
@@ -117,9 +127,8 @@ describe('UIBuilder', () => {
       builder.createGradientDiv('bottom', gradient, wrapper);
 
       const gradientDiv = wrapper.querySelector('.gradient');
-      // Check that it was created with the gradient class
       expect(gradientDiv).not.toBeNull();
-      expect(gradientDiv.className).toBe('gradient');
+      expect(gradientDiv?.className).toBe('gradient');
     });
   });
 
@@ -131,7 +140,7 @@ describe('UIBuilder', () => {
 
       const gradientDiv = wrapper.querySelector('.gradient');
       expect(gradientDiv).not.toBeNull();
-      expect(gradientDiv.className).toBe('gradient');
+      expect(gradientDiv?.className).toBe('gradient');
     });
 
     it('should apply radial gradient with type', () => {
@@ -139,8 +148,10 @@ describe('UIBuilder', () => {
 
       builder.createRadialGradientDiv('circle', gradient, wrapper);
 
-      const gradientDiv = wrapper.querySelector('.gradient');
-      expect(gradientDiv.style.backgroundImage).toBe('radial-gradient( circle, rgba(0,0,0,0.5),rgba(0,0,0,0))');
+      const gradientDiv = wrapper.querySelector('.gradient') as HTMLDivElement;
+      expect(gradientDiv.style.backgroundImage).toBe(
+        'radial-gradient( circle, rgba(0,0,0,0.5),rgba(0,0,0,0))'
+      );
     });
 
     it('should handle ellipse type', () => {
@@ -148,8 +159,10 @@ describe('UIBuilder', () => {
 
       builder.createRadialGradientDiv('ellipse', gradient, wrapper);
 
-      const gradientDiv = wrapper.querySelector('.gradient');
-      expect(gradientDiv.style.backgroundImage).toBe('radial-gradient( ellipse, red,blue)');
+      const gradientDiv = wrapper.querySelector('.gradient') as HTMLDivElement;
+      expect(gradientDiv.style.backgroundImage).toBe(
+        'radial-gradient( ellipse, red,blue)'
+      );
     });
 
     it('should append to wrapper', () => {
@@ -167,8 +180,10 @@ describe('UIBuilder', () => {
 
       builder.createRadialGradientDiv('circle', gradient, wrapper);
 
-      const gradientDiv = wrapper.querySelector('.gradient');
-      expect(gradientDiv.style.backgroundImage).toBe('radial-gradient( circle, red,yellow,green,blue)');
+      const gradientDiv = wrapper.querySelector('.gradient') as HTMLDivElement;
+      expect(gradientDiv.style.backgroundImage).toBe(
+        'radial-gradient( circle, red,yellow,green,blue)'
+      );
     });
   });
 
@@ -181,7 +196,7 @@ describe('UIBuilder', () => {
 
     it('should apply imageInfoLocation from config', () => {
       mockConfig.imageInfoLocation = 'bottomRight';
-      builder = new UIBuilder(mockConfig);
+      builder = new UIBuilder(mockConfig as ModuleConfig);
 
       const infoDiv = builder.createImageInfoDiv(wrapper);
 
@@ -189,11 +204,13 @@ describe('UIBuilder', () => {
     });
 
     it('should handle different locations', () => {
-      const locations = ['topLeft', 'topRight', 'bottomLeft', 'bottomRight'];
+      const locations: Array<
+        'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight'
+      > = ['topLeft', 'topRight', 'bottomLeft', 'bottomRight'];
 
       locations.forEach((location) => {
         mockConfig.imageInfoLocation = location;
-        builder = new UIBuilder(mockConfig);
+        builder = new UIBuilder(mockConfig as ModuleConfig);
         const testWrapper = document.createElement('div');
 
         const infoDiv = builder.createImageInfoDiv(testWrapper);
@@ -229,7 +246,9 @@ describe('UIBuilder', () => {
     it('should create inner progress div with progress-inner class', () => {
       builder.createProgressbarDiv(wrapper, 5000);
 
-      const innerDiv = wrapper.querySelector('.progress-inner');
+      const innerDiv = wrapper.querySelector(
+        '.progress-inner'
+      ) as HTMLDivElement;
       expect(innerDiv).not.toBeNull();
       expect(innerDiv.className).toBe('progress-inner');
     });
@@ -237,21 +256,27 @@ describe('UIBuilder', () => {
     it('should set inner div display to none initially', () => {
       builder.createProgressbarDiv(wrapper, 5000);
 
-      const innerDiv = wrapper.querySelector('.progress-inner');
+      const innerDiv = wrapper.querySelector(
+        '.progress-inner'
+      ) as HTMLDivElement;
       expect(innerDiv.style.display).toBe('none');
     });
 
     it('should set animation with slideshowSpeed', () => {
       builder.createProgressbarDiv(wrapper, 5000);
 
-      const innerDiv = wrapper.querySelector('.progress-inner');
+      const innerDiv = wrapper.querySelector(
+        '.progress-inner'
+      ) as HTMLDivElement;
       expect(innerDiv.style.animation).toBe('move 5000ms linear');
     });
 
     it('should handle different slideshow speeds', () => {
       builder.createProgressbarDiv(wrapper, 10000);
 
-      const innerDiv = wrapper.querySelector('.progress-inner');
+      const innerDiv = wrapper.querySelector(
+        '.progress-inner'
+      ) as HTMLDivElement;
       expect(innerDiv.style.animation).toBe('move 10000ms linear');
     });
 
@@ -259,7 +284,9 @@ describe('UIBuilder', () => {
       builder.createProgressbarDiv(wrapper, 5000);
 
       const progressDiv = wrapper.querySelector('.progress');
-      const innerDiv = wrapper.querySelector('.progress-inner');
+      const innerDiv = wrapper.querySelector(
+        '.progress-inner'
+      ) as HTMLDivElement;
       expect(innerDiv.parentNode).toBe(progressDiv);
     });
 
@@ -274,7 +301,6 @@ describe('UIBuilder', () => {
 
   describe('restartProgressBar', () => {
     beforeEach(() => {
-      // Add a progress bar to the document
       const progressDiv = document.createElement('div');
       progressDiv.className = 'progress';
       const innerDiv = document.createElement('div');
@@ -286,42 +312,53 @@ describe('UIBuilder', () => {
     });
 
     afterEach(() => {
-      // Clean up
       document.body.innerHTML = '';
     });
 
     it('should clone the progress-inner div', () => {
-      const oldDiv = document.querySelector('.progress-inner');
+      const oldDiv = document.querySelector(
+        '.progress-inner'
+      ) as HTMLDivElement;
       const oldParent = oldDiv.parentNode;
 
       builder.restartProgressBar();
 
-      const newDiv = document.querySelector('.progress-inner');
+      const newDiv = document.querySelector(
+        '.progress-inner'
+      ) as HTMLDivElement;
       expect(newDiv).not.toBe(oldDiv);
       expect(newDiv.parentNode).toBe(oldParent);
     });
 
     it('should set display to empty string on new div', () => {
-      const oldDiv = document.querySelector('.progress-inner');
+      const oldDiv = document.querySelector(
+        '.progress-inner'
+      ) as HTMLDivElement;
       expect(oldDiv.style.display).toBe('none');
 
       builder.restartProgressBar();
 
-      const newDiv = document.querySelector('.progress-inner');
+      const newDiv = document.querySelector(
+        '.progress-inner'
+      ) as HTMLDivElement;
       expect(newDiv.style.display).toBe('');
     });
 
     it('should preserve animation style', () => {
       builder.restartProgressBar();
 
-      const newDiv = document.querySelector('.progress-inner');
+      const newDiv = document.querySelector(
+        '.progress-inner'
+      ) as HTMLDivElement;
       expect(newDiv.style.animation).toBe('move 5000ms linear');
     });
 
     it('should preserve className', () => {
       builder.restartProgressBar();
 
-      const newDiv = document.querySelector('.progress-inner');
+      const newDiv = document.querySelector(
+        '.progress-inner'
+      ) as HTMLDivElement;
       expect(newDiv.className).toBe('progress-inner');
     });
 
@@ -334,15 +371,19 @@ describe('UIBuilder', () => {
     });
 
     it('should replace old div in DOM', () => {
-      const progressDiv = document.querySelector('.progress');
-      const oldDiv = document.querySelector('.progress-inner');
+      const progressDiv = document.querySelector('.progress') as HTMLDivElement;
+      const oldDiv = document.querySelector(
+        '.progress-inner'
+      ) as HTMLDivElement;
 
       expect(progressDiv.childNodes.length).toBe(1);
       expect(progressDiv.firstChild).toBe(oldDiv);
 
       builder.restartProgressBar();
 
-      const newDiv = document.querySelector('.progress-inner');
+      const newDiv = document.querySelector(
+        '.progress-inner'
+      ) as HTMLDivElement;
       expect(progressDiv.childNodes.length).toBe(1);
       expect(progressDiv.firstChild).toBe(newDiv);
       expect(progressDiv.firstChild).not.toBe(oldDiv);
@@ -350,9 +391,9 @@ describe('UIBuilder', () => {
   });
 
   describe('updateImageInfo', () => {
-    let imageInfoDiv;
-    let imageInfo;
-    let translate;
+    let imageInfoDiv: HTMLDivElement;
+    let imageInfo: ImageInfo;
+    let translate: (key: string) => string;
 
     beforeEach(() => {
       imageInfoDiv = document.createElement('div');
@@ -363,7 +404,9 @@ describe('UIBuilder', () => {
     it('should create header with translated text', () => {
       builder.updateImageInfo(imageInfoDiv, imageInfo, '2025-11-09', translate);
 
-      expect(imageInfoDiv.innerHTML).toContain('<header class="infoDivHeader">Picture Information</header>');
+      expect(imageInfoDiv.innerHTML).toContain(
+        '<header class="infoDivHeader">Picture Information</header>'
+      );
     });
 
     it('should use custom translation', () => {
@@ -371,14 +414,21 @@ describe('UIBuilder', () => {
         PICTURE_INFO: 'Photo Details'
       });
 
-      builder.updateImageInfo(imageInfoDiv, imageInfo, '2025-11-09', customTranslate);
+      builder.updateImageInfo(
+        imageInfoDiv,
+        imageInfo,
+        '2025-11-09',
+        customTranslate
+      );
 
-      expect(imageInfoDiv.innerHTML).toContain('<header class="infoDivHeader">Photo Details</header>');
+      expect(imageInfoDiv.innerHTML).toContain(
+        '<header class="infoDivHeader">Photo Details</header>'
+      );
     });
 
     it('should display date when in config', () => {
       mockConfig.imageInfo = ['date'];
-      builder = new UIBuilder(mockConfig);
+      builder = new UIBuilder(mockConfig as ModuleConfig);
 
       builder.updateImageInfo(imageInfoDiv, imageInfo, '2025-11-09', translate);
 
@@ -387,27 +437,32 @@ describe('UIBuilder', () => {
 
     it('should not display date when Invalid date', () => {
       mockConfig.imageInfo = ['date'];
-      builder = new UIBuilder(mockConfig);
+      builder = new UIBuilder(mockConfig as ModuleConfig);
 
-      builder.updateImageInfo(imageInfoDiv, imageInfo, 'Invalid date', translate);
+      builder.updateImageInfo(
+        imageInfoDiv,
+        imageInfo,
+        'Invalid date',
+        translate
+      );
 
       expect(imageInfoDiv.innerHTML).not.toContain('Invalid date');
     });
 
     it('should not display date when imageDate is null', () => {
       mockConfig.imageInfo = ['date'];
-      builder = new UIBuilder(mockConfig);
+      builder = new UIBuilder(mockConfig as ModuleConfig);
 
       builder.updateImageInfo(imageInfoDiv, imageInfo, null, translate);
 
       const content = imageInfoDiv.innerHTML;
       expect(content).toContain('<header');
-      expect(content.split('<br').length).toBe(1); // Only header, no date
+      expect(content.split('<br').length).toBe(1);
     });
 
     it('should display image name from path', () => {
       mockConfig.imageInfo = ['name'];
-      builder = new UIBuilder(mockConfig);
+      builder = new UIBuilder(mockConfig as ModuleConfig);
       imageInfo.path = '/photos/vacation/beach.jpg';
 
       builder.updateImageInfo(imageInfoDiv, imageInfo, null, translate);
@@ -418,7 +473,7 @@ describe('UIBuilder', () => {
     it('should display name without extension when imageInfoNoFileExt is true', () => {
       mockConfig.imageInfo = ['name'];
       mockConfig.imageInfoNoFileExt = true;
-      builder = new UIBuilder(mockConfig);
+      builder = new UIBuilder(mockConfig as ModuleConfig);
       imageInfo.path = '/photos/vacation/beach.jpg';
 
       builder.updateImageInfo(imageInfoDiv, imageInfo, null, translate);
@@ -430,18 +485,17 @@ describe('UIBuilder', () => {
     it('should handle name without extension', () => {
       mockConfig.imageInfo = ['name'];
       mockConfig.imageInfoNoFileExt = true;
-      builder = new UIBuilder(mockConfig);
+      builder = new UIBuilder(mockConfig as ModuleConfig);
       imageInfo.path = '/photos/vacation/image';
 
       builder.updateImageInfo(imageInfoDiv, imageInfo, null, translate);
 
-      // When there's no extension, keep the full name
       expect(imageInfoDiv.innerHTML).toContain('image<br');
     });
 
     it('should display image count', () => {
       mockConfig.imageInfo = ['imagecount'];
-      builder = new UIBuilder(mockConfig);
+      builder = new UIBuilder(mockConfig as ModuleConfig);
       imageInfo.index = 5;
       imageInfo.total = 20;
 
@@ -452,7 +506,7 @@ describe('UIBuilder', () => {
 
     it('should display multiple properties in order', () => {
       mockConfig.imageInfo = ['imagecount', 'name', 'date'];
-      builder = new UIBuilder(mockConfig);
+      builder = new UIBuilder(mockConfig as ModuleConfig);
       imageInfo.path = '/photos/sunset.jpg';
       imageInfo.index = 3;
       imageInfo.total = 10;
@@ -470,16 +524,18 @@ describe('UIBuilder', () => {
 
     it('should warn on invalid property', () => {
       mockConfig.imageInfo = ['invalid', 'date'];
-      builder = new UIBuilder(mockConfig);
+      builder = new UIBuilder(mockConfig as ModuleConfig);
 
       builder.updateImageInfo(imageInfoDiv, imageInfo, '2025-11-09', translate);
 
-      expect(Log.warn).toHaveBeenCalledWith('[MMM-SynPhotoSlideshow] invalid is not a valid value for imageInfo. Please check your configuration');
+      expect(Log.warn).toHaveBeenCalledWith(
+        '[MMM-SynPhotoSlideshow] invalid is not a valid value for imageInfo. Please check your configuration'
+      );
     });
 
     it('should continue processing after invalid property', () => {
       mockConfig.imageInfo = ['invalid', 'date'];
-      builder = new UIBuilder(mockConfig);
+      builder = new UIBuilder(mockConfig as ModuleConfig);
 
       builder.updateImageInfo(imageInfoDiv, imageInfo, '2025-11-09', translate);
 
@@ -488,17 +544,17 @@ describe('UIBuilder', () => {
 
     it('should handle empty imageInfo array', () => {
       mockConfig.imageInfo = [];
-      builder = new UIBuilder(mockConfig);
+      builder = new UIBuilder(mockConfig as ModuleConfig);
 
       builder.updateImageInfo(imageInfoDiv, imageInfo, '2025-11-09', translate);
 
       expect(imageInfoDiv.innerHTML).toContain('<header');
-      expect(imageInfoDiv.innerHTML.split('<br').length).toBe(1); // Only header
+      expect(imageInfoDiv.innerHTML.split('<br').length).toBe(1);
     });
 
     it('should handle complex paths', () => {
       mockConfig.imageInfo = ['name'];
-      builder = new UIBuilder(mockConfig);
+      builder = new UIBuilder(mockConfig as ModuleConfig);
       imageInfo.path = '/home/user/photos/2025/11/vacation/beach/IMG_1234.JPG';
 
       builder.updateImageInfo(imageInfoDiv, imageInfo, null, translate);
@@ -509,7 +565,7 @@ describe('UIBuilder', () => {
     it('should handle paths with multiple extensions', () => {
       mockConfig.imageInfo = ['name'];
       mockConfig.imageInfoNoFileExt = true;
-      builder = new UIBuilder(mockConfig);
+      builder = new UIBuilder(mockConfig as ModuleConfig);
       imageInfo.path = '/photos/archive.tar.gz';
 
       builder.updateImageInfo(imageInfoDiv, imageInfo, null, translate);
@@ -520,17 +576,13 @@ describe('UIBuilder', () => {
 
   describe('integration scenarios', () => {
     it('should create complete UI with all elements', () => {
-      // Create gradients
       const gradient1 = ['rgba(0,0,0,0.5)', 'rgba(0,0,0,0)'];
       builder.createGradientDiv('bottom', gradient1, wrapper);
 
       const gradient2 = ['rgba(255,255,255,0.3)', 'rgba(255,255,255,0)'];
       builder.createRadialGradientDiv('circle', gradient2, wrapper);
 
-      // Create info div
       builder.createImageInfoDiv(wrapper);
-
-      // Create progress bar
       builder.createProgressbarDiv(wrapper, 5000);
 
       expect(wrapper.childNodes.length).toBe(4);
@@ -560,12 +612,16 @@ describe('UIBuilder', () => {
       builder.createProgressbarDiv(wrapper, 5000);
       document.body.appendChild(wrapper);
 
-      const oldInner = wrapper.querySelector('.progress-inner');
+      const oldInner = wrapper.querySelector(
+        '.progress-inner'
+      ) as HTMLDivElement;
       expect(oldInner.style.display).toBe('none');
 
       builder.restartProgressBar();
 
-      const newInner = wrapper.querySelector('.progress-inner');
+      const newInner = wrapper.querySelector(
+        '.progress-inner'
+      ) as HTMLDivElement;
       expect(newInner).not.toBe(oldInner);
       expect(newInner.style.display).toBe('');
 
@@ -591,13 +647,11 @@ describe('UIBuilder', () => {
     });
 
     it('should handle configuration changes between operations', () => {
-      // Create with original config
       const infoDiv1 = builder.createImageInfoDiv(wrapper);
       expect(infoDiv1.className).toContain('bottomLeft');
 
-      // Change config
       mockConfig.imageInfoLocation = 'topRight';
-      builder = new UIBuilder(mockConfig);
+      builder = new UIBuilder(mockConfig as ModuleConfig);
 
       const wrapper2 = document.createElement('div');
       const infoDiv2 = builder.createImageInfoDiv(wrapper2);

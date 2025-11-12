@@ -3,6 +3,7 @@
 ## Completed
 
 ### Configuration Files
+
 - ✅ `tsconfig.json` - TypeScript compiler configuration
 - ✅ `babel.config.js` - Babel configuration for TypeScript
 - ✅ `rollup.config.mjs` - Rollup bundler configuration
@@ -12,12 +13,14 @@
 - ✅ `package.json` - Updated with TypeScript dependencies and build scripts
 
 ### Project Structure
+
 - ✅ Created `src/` directory
 - ✅ Created `src/backend/` directory
 - ✅ Created `src/frontend/` directory
 - ✅ Created `src/types.ts` - Shared TypeScript types
 
 ### Core Files (Converted to TypeScript)
+
 - ✅ `src/MMM-SynPhotoSlideshow.ts` - Main module file (placeholder implementation)
 - ✅ `src/node_helper.ts` - Node helper with basic structure
 - ✅ `src/backend/Logger.ts` - Logger utility
@@ -67,6 +70,7 @@ Files in `utils/frontend/` need to be converted to TypeScript in `src/frontend/`
 All `.test.js` files need to be converted to `.test.ts`:
 
 **Backend Tests:**
+
 - ConfigLoader.test.js
 - ImageCache.test.js
 - ImageListManager.test.js
@@ -78,6 +82,7 @@ All `.test.js` files need to be converted to `.test.ts`:
 - TimerManager.test.js
 
 **Frontend Tests:**
+
 - ConfigValidator.test.js
 - ImageHandler.test.js
 - TransitionHandler.test.js
@@ -86,6 +91,7 @@ All `.test.js` files need to be converted to `.test.ts`:
 ### Main Module Implementation
 
 The `src/MMM-SynPhotoSlideshow.ts` file currently has a placeholder implementation and needs:
+
 - Full conversion of the original JavaScript logic
 - Proper TypeScript types for all properties and methods
 - Integration with frontend utilities

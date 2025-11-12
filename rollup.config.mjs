@@ -1,7 +1,7 @@
 import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
-import typescript from '@rollup/plugin-typescript';
 import scss from 'rollup-plugin-scss'
+import typescript from '@rollup/plugin-typescript';
 
 export default [
     {

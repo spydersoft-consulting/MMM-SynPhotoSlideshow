@@ -20,223 +20,273 @@ import SynologyManager from './backend/SynologyManager';
 import ImageProcessor from './backend/ImageProcessor';
 import ImageCache from './backend/ImageCache';
 import MemoryMonitor from './backend/MemoryMonitor';
-import type { ImageInfo, ModuleConfig, PhotoItem } from './types';
+import type { ImageInfo, ModuleConfig } from './types';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const NodeHelper = require('node_helper');
 
 interface NodeHelperInstance {
-	name: string;
-	sendSocketNotification: (notification: string, payload?: unknown) => void;
+  name: string;
+  sendSocketNotification: (notification: string, payload?: unknown) => void;
 }
 
 interface HelperModule extends NodeHelperInstance {
-	imageListManager: ImageListManager;
-	timerManager: TimerManager;
-	synologyManager: SynologyManager;
-	imageCache: ImageCache | null;
-	imageProcessor: ImageProcessor | null;
-	memoryMonitor: MemoryMonitor | null;
-	config: ModuleConfig | null;
-	start: () => void;
-	socketNotificationReceived: (notification: string, payload: unknown) => void;
-	gatherImageList: (config: ModuleConfig, sendNotification?: boolean) => Promise<void>;
-	getNextImage: () => void;
-	getPrevImage: () => void;
-	refreshImageList: () => Promise<void>;
+  imageListManager: ImageListManager;
+  timerManager: TimerManager;
+  synologyManager: SynologyManager;
+  imageCache: ImageCache | null;
+  imageProcessor: ImageProcessor | null;
+  memoryMonitor: MemoryMonitor | null;
+  config: ModuleConfig | null;
+  isRetryingImageLoad: boolean;
+  start: () => void;
+  socketNotificationReceived: (notification: string, payload: unknown) => void;
+  gatherImageList: (
+    config: ModuleConfig,
+    sendNotification?: boolean
+  ) => Promise<void>;
+  getNextImage: () => Promise<void>;
+  getPrevImage: () => void;
+  refreshImageList: () => Promise<void>;
 }
 
-const helperModule: Partial<HelperModule> = {
-	start(): void {
-		this.imageListManager = new ImageListManager();
-		this.timerManager = new TimerManager();
-		this.synologyManager = new SynologyManager();
-		this.imageCache = null;
-		this.imageProcessor = null;
-		this.memoryMonitor = null;
-		this.config = null;
-		Log.info('Node helper started');
-	},
+const helperModule: Partial<HelperModule> & ThisType<HelperModule> = {
+  start(this: HelperModule): void {
+    this.imageListManager = new ImageListManager();
+    this.timerManager = new TimerManager();
+    this.synologyManager = new SynologyManager();
+    this.imageCache = null;
+    this.imageProcessor = null;
+    this.memoryMonitor = null;
+    this.config = null;
+    this.isRetryingImageLoad = false;
+    Log.info('MMM-SynPhotoSlideshow helper started');
+  },
 
-	async gatherImageList(config: ModuleConfig, sendNotification = false): Promise<void> {
-		if (!config || !config.synologyUrl) {
-			this.sendSocketNotification('BACKGROUNDSLIDESHOW_REGISTER_CONFIG');
-			return;
-		}
+  async gatherImageList(
+    this: HelperModule,
+    config: ModuleConfig,
+    sendNotification = false
+  ): Promise<void> {
+    if (!config || !config.synologyUrl) {
+      this.sendSocketNotification('BACKGROUNDSLIDESHOW_REGISTER_CONFIG');
+      return;
+    }
 
-		Log.info('Gathering image list...');
+    Log.info('Gathering image list...');
 
-		const photos = await this.synologyManager.fetchPhotos(config);
-		const finalImageList = this.imageListManager.prepareImageList(photos, config);
+    const photos = await this.synologyManager.fetchPhotos(config);
+    const finalImageList = this.imageListManager.prepareImageList(
+      photos,
+      config
+    );
 
-		if (this.imageCache && config.enableImageCache) {
-			this.imageCache.preloadImages(finalImageList, (image, callback) => {
-				this.imageProcessor?.readFile(image.path, callback, image.url, this.synologyManager.getClient());
-			});
-		}
+    if (this.imageCache && config.enableImageCache) {
+      this.imageCache.preloadImages(finalImageList, (image, callback) => {
+        this.imageProcessor?.readFile(
+          image.path,
+          callback,
+          image.url,
+          this.synologyManager.getClient()
+        );
+      });
+    }
 
-		this.sendSocketNotification('BACKGROUNDSLIDESHOW_FILELIST', {
-			imageList: finalImageList
-		});
+    this.sendSocketNotification('BACKGROUNDSLIDESHOW_FILELIST', {
+      imageList: finalImageList
+    });
 
-		if (sendNotification) {
-			this.sendSocketNotification('BACKGROUNDSLIDESHOW_READY', {
-				identifier: config.identifier
-			});
-		}
-	},
+    if (sendNotification) {
+      this.sendSocketNotification('BACKGROUNDSLIDESHOW_READY', {
+        identifier: config.identifier
+      });
+    }
+  },
 
-	async getNextImage(): Promise<void> {
-		Log.info('Getting next image...');
+  async getNextImage(this: HelperModule): Promise<void> {
+    Log.info('Getting next image...');
 
-		if (!this.imageListManager || this.imageListManager.isEmpty()) {
-			Log.info('Image list empty, loading images...');
-			if (this.config) {
-				await this.gatherImageList(this.config);
-			}
+    if (!this.imageListManager || this.imageListManager.isEmpty()) {
+      Log.info('Image list empty, loading images...');
+      if (this.config) {
+        await this.gatherImageList(this.config);
+      }
 
-			if (this.imageListManager.isEmpty()) {
-				Log.warn('No images available, retrying in 10 minutes');
-				setTimeout(() => {
-					void this.getNextImage();
-				}, 600000);
-				return;
-			}
-		}
+      if (this.imageListManager.isEmpty()) {
+        // Only schedule one retry attempt
+        if (!this.isRetryingImageLoad) {
+          Log.warn('No images available, retrying in 10 minutes');
+          this.isRetryingImageLoad = true;
+          setTimeout(() => {
+            this.isRetryingImageLoad = false;
+            this.getNextImage().catch((error) => {
+              Log.error(
+                `Error retrying image load: ${(error as Error).message}`
+              );
+            });
+          }, 600000);
+        }
+        return;
+      }
+    }
 
-		const image = this.imageListManager.getNextImage();
-		if (!image) {
-			Log.error('Failed to get next image');
-			return;
-		}
+    // Clear retry flag if we have images
+    this.isRetryingImageLoad = false;
 
-		if (this.imageListManager.index === 0 && this.config?.showAllImagesBeforeRestart) {
-			this.imageListManager.resetShownImagesTracker();
-		}
+    const image = this.imageListManager.getNextImage();
+    if (!image) {
+      Log.error('Failed to get next image');
+      return;
+    }
 
-		const imageUrl = image.url || null;
-		const synologyClient = this.synologyManager.getClient();
+    if (
+      this.imageListManager.index === 0 &&
+      this.config?.showAllImagesBeforeRestart
+    ) {
+      this.imageListManager.resetShownImagesTracker();
+    }
 
-		this.imageProcessor?.readFile(image.path, (data) => {
-			const returnPayload: ImageInfo = {
-				identifier: this.config?.identifier || '',
-				path: image.path,
-				data: data || '',
-				index: this.imageListManager.index,
-				total: this.imageListManager.getList().length
-			};
-			Log.info(`Sending DISPLAY_IMAGE notification for "${image.path}"`);
-			this.sendSocketNotification('BACKGROUNDSLIDESHOW_DISPLAY_IMAGE', returnPayload);
-		}, imageUrl, synologyClient);
+    const imageUrl = image.url || null;
+    const synologyClient = this.synologyManager.getClient();
 
-		const slideshowSpeed = this.config?.slideshowSpeed || 10000;
-		this.timerManager.startSlideshowTimer(() => {
-			void this.getNextImage();
-		}, slideshowSpeed);
+    this.imageProcessor?.readFile(
+      image.path,
+      (data) => {
+        const returnPayload: ImageInfo = {
+          identifier: this.config?.identifier || '',
+          path: image.path,
+          data: data || '',
+          index: this.imageListManager.index,
+          total: this.imageListManager.getList().length
+        };
+        Log.info(`Sending DISPLAY_IMAGE notification for "${image.path}"`);
+        this.sendSocketNotification(
+          'BACKGROUNDSLIDESHOW_DISPLAY_IMAGE',
+          returnPayload
+        );
+      },
+      imageUrl,
+      synologyClient
+    );
 
-		if (this.config?.showAllImagesBeforeRestart) {
-			this.imageListManager.addImageToShown(image.path);
-		}
-	},
+    const slideshowSpeed = this.config?.slideshowSpeed || 10000;
+    this.timerManager.startSlideshowTimer(() => {
+      void this.getNextImage();
+    }, slideshowSpeed);
 
-	async refreshImageList(): Promise<void> {
-		Log.info('Refreshing image list from Synology...');
+    if (this.config?.showAllImagesBeforeRestart) {
+      this.imageListManager.addImageToShown(image.path);
+    }
+  },
 
-		if (!this.config) {
-			return;
-		}
+  async refreshImageList(this: HelperModule): Promise<void> {
+    Log.info('Refreshing image list from Synology...');
 
-		const currentIndex = this.imageListManager?.index || 0;
+    if (!this.config) {
+      return;
+    }
 
-		await this.gatherImageList(this.config, false);
+    const currentIndex = this.imageListManager?.index || 0;
 
-		const listLength = this.imageListManager?.getList().length || 0;
-		if (this.imageListManager) {
-			if (currentIndex < listLength) {
-				this.imageListManager.index = currentIndex;
-				Log.info(`Maintained position at index ${currentIndex}`);
-			} else {
-				this.imageListManager.reset();
-				Log.info('Reset to beginning of new image list');
-			}
-		}
+    await this.gatherImageList(this.config, false);
 
-		const refreshInterval = this.config?.refreshImageListInterval || 60 * 60 * 1000;
-		this.timerManager?.startRefreshTimer(() => {
-			void this.refreshImageList();
-		}, refreshInterval);
-	},
+    const listLength = this.imageListManager?.getList().length || 0;
+    if (this.imageListManager) {
+      if (currentIndex < listLength) {
+        this.imageListManager.index = currentIndex;
+        Log.info(`Maintained position at index ${currentIndex}`);
+      } else {
+        this.imageListManager.reset();
+        Log.info('Reset to beginning of new image list');
+      }
+    }
 
-	getPrevImage(): void {
-		if (this.imageListManager) {
-			this.imageListManager.getPreviousImage();
-		}
-		void this.getNextImage();
-	},
+    const refreshInterval =
+      this.config?.refreshImageListInterval || 60 * 60 * 1000;
+    this.timerManager?.startRefreshTimer(() => {
+      void this.refreshImageList();
+    }, refreshInterval);
+  },
 
-	socketNotificationReceived(notification: string, payload: unknown): void {
-		if (notification === 'BACKGROUNDSLIDESHOW_REGISTER_CONFIG') {
-			const config = ConfigLoader.initialize(payload as Partial<ModuleConfig>);
-			this.config = config;
+  getPrevImage(this: HelperModule): void {
+    if (this.imageListManager) {
+      this.imageListManager.getPreviousImage();
+    }
+    void this.getNextImage();
+  },
 
-			if (config.enableMemoryMonitor !== false) {
-				this.memoryMonitor = new MemoryMonitor(config);
+  socketNotificationReceived(
+    this: HelperModule,
+    notification: string,
+    payload: unknown
+  ): void {
+    if (notification === 'BACKGROUNDSLIDESHOW_REGISTER_CONFIG') {
+      const config = ConfigLoader.initialize(payload as Partial<ModuleConfig>);
+      this.config = config;
 
-				this.memoryMonitor.onCleanupNeeded(() => {
-					Log.info('Running memory cleanup');
+      if (config.enableMemoryMonitor !== false) {
+        this.memoryMonitor = new MemoryMonitor(config);
 
-					if (this.imageCache) {
-						void this.imageCache.evictOldFiles();
-					}
-				});
+        this.memoryMonitor.onCleanupNeeded(() => {
+          Log.info('Running memory cleanup');
 
-				this.memoryMonitor.start();
-			}
+          if (this.imageCache) {
+            void this.imageCache.evictOldFiles();
+          }
+        });
 
-			if (config.enableImageCache) {
-				this.imageCache = new ImageCache(config);
-				void this.imageCache.initialize();
-			}
+        this.memoryMonitor.start();
+      }
 
-			this.imageProcessor = new ImageProcessor(config, this.imageCache);
+      if (config.enableImageCache) {
+        this.imageCache = new ImageCache(config);
+        void this.imageCache.initialize();
+      }
 
-			setTimeout(() => {
-				void this.gatherImageList(config, true).then(() => {
-					void this.getNextImage();
-				});
+      this.imageProcessor = new ImageProcessor(config, this.imageCache);
 
-				const refreshInterval = config?.refreshImageListInterval || 60 * 60 * 1000;
-				this.timerManager.startRefreshTimer(() => {
-					void this.refreshImageList();
-				}, refreshInterval);
-			}, 200);
-		} else if (notification === 'BACKGROUNDSLIDESHOW_PLAY_VIDEO') {
-			Log.info('Playing video');
-			const videoPayload = payload as string[];
-			exec(`omxplayer --win 0,0,1920,1080 --alpha 180 ${videoPayload[0]}`, () => {
-				this.sendSocketNotification('BACKGROUNDSLIDESHOW_PLAY', null);
-				Log.info('Video playback complete');
-			});
-		} else if (notification === 'BACKGROUNDSLIDESHOW_NEXT_IMAGE') {
-			Log.debug('BACKGROUNDSLIDESHOW_NEXT_IMAGE');
-			void this.getNextImage();
-		} else if (notification === 'BACKGROUNDSLIDESHOW_PREV_IMAGE') {
-			Log.debug('BACKGROUNDSLIDESHOW_PREV_IMAGE');
-			this.getPrevImage();
-		} else if (notification === 'BACKGROUNDSLIDESHOW_PAUSE') {
-			this.timerManager?.stopAllTimers();
-		} else if (notification === 'BACKGROUNDSLIDESHOW_PLAY') {
-			const slideshowSpeed = this.config?.slideshowSpeed || 10000;
-			this.timerManager?.startSlideshowTimer(() => {
-				void this.getNextImage();
-			}, slideshowSpeed);
+      setTimeout(() => {
+        void this.gatherImageList(config, true).then(() => {
+          void this.getNextImage();
+        });
 
-			const refreshInterval = this.config?.refreshImageListInterval || 60 * 60 * 1000;
-			this.timerManager?.startRefreshTimer(() => {
-				void this.refreshImageList();
-			}, refreshInterval);
-		}
-	}
+        const refreshInterval =
+          config?.refreshImageListInterval || 60 * 60 * 1000;
+        this.timerManager.startRefreshTimer(() => {
+          void this.refreshImageList();
+        }, refreshInterval);
+      }, 200);
+    } else if (notification === 'BACKGROUNDSLIDESHOW_PLAY_VIDEO') {
+      Log.info('Playing video');
+      const videoPayload = payload as string[];
+      exec(
+        `omxplayer --win 0,0,1920,1080 --alpha 180 ${videoPayload[0]}`,
+        () => {
+          this.sendSocketNotification('BACKGROUNDSLIDESHOW_PLAY', null);
+          Log.info('Video playback complete');
+        }
+      );
+    } else if (notification === 'BACKGROUNDSLIDESHOW_NEXT_IMAGE') {
+      Log.debug('BACKGROUNDSLIDESHOW_NEXT_IMAGE');
+      void this.getNextImage();
+    } else if (notification === 'BACKGROUNDSLIDESHOW_PREV_IMAGE') {
+      Log.debug('BACKGROUNDSLIDESHOW_PREV_IMAGE');
+      this.getPrevImage();
+    } else if (notification === 'BACKGROUNDSLIDESHOW_PAUSE') {
+      this.timerManager?.stopAllTimers();
+    } else if (notification === 'BACKGROUNDSLIDESHOW_PLAY') {
+      const slideshowSpeed = this.config?.slideshowSpeed || 10000;
+      this.timerManager?.startSlideshowTimer(() => {
+        void this.getNextImage();
+      }, slideshowSpeed);
+
+      const refreshInterval =
+        this.config?.refreshImageListInterval || 60 * 60 * 1000;
+      this.timerManager?.startRefreshTimer(() => {
+        void this.refreshImageList();
+      }, refreshInterval);
+    }
+  }
 };
 
 module.exports = NodeHelper.create(helperModule);

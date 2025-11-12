@@ -71,7 +71,7 @@
     "test": "npm run test:unit && npm run test:prettier && npm run lint:js",
     "test:unit": "jest",
     "test:prettier": "prettier --check **/*.{js,ts,css,json,md,yml}",
-    "test-ci": "jest --ci --coverage --coverageDirectory=output/coverage/jest",
+    "test:coverage": "jest --ci --coverage --coverageDirectory=output/coverage/jest",
     "lint": "npm run lint:js && npm run lint:prettier",
     "lint:prettier": "prettier --write **/*.{js,ts,css,json,md,yml}",
     "lint:js": "eslint --cache --fix --max-warnings 0 .",
@@ -82,9 +82,8 @@
     "watch": "npm run dev -- --watch",
     "install:prod": "npm install --omit=dev"
   },
-
   "lint-staged": {
-    "*.{js,mjs,css}": [
+    "*.{js,mjs,ts,css}": [
       "prettier --write",
       "eslint --fix"
     ],

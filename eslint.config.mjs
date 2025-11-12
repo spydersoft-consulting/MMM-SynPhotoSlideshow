@@ -4,9 +4,9 @@ import globals from 'globals';
 import {flatConfigs as importX} from 'eslint-plugin-import-x';
 import js from '@eslint/js';
 import markdown from '@eslint/markdown';
+import prettierConfig from 'eslint-config-prettier';
 import stylistic from '@stylistic/eslint-plugin';
-import tseslint from "typescript-eslint";
-import prettierConfig from "eslint-config-prettier";
+import tseslint from 'typescript-eslint';
 
 export default defineConfig([
   {
@@ -20,7 +20,8 @@ export default defineConfig([
     'extends': ['css/recommended'],
     'rules': {
       'css/use-baseline': ['error', {'available': 'newly'}],
-      'css/no-important': 'off'
+      'css/no-important': 'off',
+      'css/no-empty-blocks': 'off'
     }
   },
   ...tseslint.configs.recommended,
@@ -46,6 +47,7 @@ export default defineConfig([
         'TransitionHandler': 'readonly',
         'UIBuilder': 'readonly',
         'moment': 'readonly',
+        'NodeJS': 'readonly',
         config: true,
         MM: true
       }
@@ -72,6 +74,7 @@ export default defineConfig([
       'consistent-this': 'off',
       'curly': 'off',
       'id-length': 'off',
+      'import-x/no-unresolved': 'off',
       'init-declarations': 'off',
       'line-comment-position': 'off',
       'max-depth': ['error', 5],
@@ -92,10 +95,14 @@ export default defineConfig([
       'no-param-reassign': 'off',
       'no-plusplus': 'off',
       'no-ternary': 'off',
+      'no-undefined': 'off',
       'no-underscore-dangle': 'off',
+      'no-unused-vars': 'off',
+      'no-void': ['error', {'allowAsStatement': true}],
       'no-warning-comments': 'off',
       'one-var': ['error', 'never'],
       'require-await': 'off',
+      'sort-imports': 'off',
       'sort-keys': 'off'
     }
   },
@@ -105,7 +112,8 @@ export default defineConfig([
       parser: tseslint.parser,
       'globals': {
         ...globals.node,
-        ...globals.jest
+        ...globals.jest,
+        'NodeJS': 'readonly'
       }
     },
     'plugins': {js,
@@ -150,10 +158,14 @@ export default defineConfig([
       'no-plusplus': 'off',
       'no-ternary': 'off',
       'no-underscore-dangle': 'off',
+      'no-unused-vars': 'off',
       'no-warning-comments': 'off',
       'one-var': ['error', 'never'],
       'require-await': 'off',
-      'sort-keys': 'off'
+      'sort-keys': 'off',
+      'import-x/no-unresolved': 'off',
+      'no-undefined': 'off',
+      'sort-imports': 'off'
     }
   },
   {

@@ -10,8 +10,8 @@
 		height: 100%;
 		overflow: hidden;
 
-	/* Transition wrapper for each image */
-	.transition {
+		/* Transition wrapper for each image */
+		.transition {
 		position: absolute;
 		top: 0;
 		left: 0;
@@ -19,10 +19,10 @@
 		height: 100%;
 		opacity: 1;
 		transition: opacity 2s ease-in-out;
-	}
+		}
 
-	/* Individual image div */
-	.image {
+		/* Individual image div */
+		.image {
 		position: absolute;
 		top: 0;
 		left: 0;
@@ -54,18 +54,18 @@
 			background-position-y: 0;
 			animation-fill-mode: forwards;
 		}
-	}
+		}
 
-	/* Gradient overlays */
-	.gradient {
-		position: absolute;
-		width: 100%;
-		height: 100%;
-		pointer-events: none;
-	}
+		/* Gradient overlays */
+		.gradient {
+			position: absolute;
+			width: 100%;
+			height: 100%;
+			pointer-events: none;
+		}
 
-	/* Image info display */
-	.info {
+		/* Image info display */
+		.info {
 		position: absolute;
 		padding: 10px 20px;
 		color: white;
@@ -96,25 +96,25 @@
 			left: 10px;
 			text-align: left;
 		}
-	}
-
-	/* Progress bar */
-	.progress {
-		position: absolute;
-		bottom: 0;
-		left: 0;
-		width: 100%;
-		height: 3px;
-		background: rgba(255, 255, 255, 0.2);
-		z-index: 3;
-
-		&-inner {
-			height: 100%;
-			background: rgba(255, 255, 255, 0.8);
-			width: 0;
-			transition: width linear;
 		}
-	}
+
+		/* Progress bar */
+		.progress {
+			position: absolute;
+			bottom: 0;
+			left: 0;
+			width: 100%;
+			height: 3px;
+			background: rgba(255, 255, 255, 0.2);
+			z-index: 3;
+
+			&-inner {
+				height: 100%;
+				background: rgba(255, 255, 255, 0.8);
+				width: 0;
+				transition: width linear;
+			}
+		}
 	}
 }
 

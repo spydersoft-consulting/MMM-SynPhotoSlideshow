@@ -1,28 +1,35 @@
 /**
- * ImageProcessor.test.js
+ * ImageProcessor.test.ts
  *
  * Unit tests for ImageProcessor
  */
 
 // Mock the Logger
-jest.mock('./Logger.js');
+jest.mock('./Logger');
+import Log from './Logger';
 
 // Mock sharp
 jest.mock('sharp');
+import sharp from 'sharp';
 
 // Mock node:fs/promises
 jest.mock('node:fs/promises');
+import * as fsPromises from 'node:fs/promises';
 
-const sharp = require('sharp');
-const fsPromises = require('node:fs/promises');
-const ImageProcessor = require('./ImageProcessor');
-const Log = require('./Logger.js');
+import ImageProcessor from './ImageProcessor';
+import type ImageCache from './ImageCache';
+import type SynologyPhotosClient from './SynologyPhotosClient';
 
 describe('ImageProcessor', () => {
-  let processor;
-  let mockConfig;
-  let mockImageCache;
-  let mockCallback;
+  let processor: ImageProcessor;
+  let mockConfig: {
+    maxWidth: number;
+    maxHeight: number;
+    resizeImages: boolean;
+    enableImageCache: boolean;
+  };
+  let mockImageCache: jest.Mocked<ImageCache>;
+  let mockCallback: jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -42,35 +49,51 @@ describe('ImageProcessor', () => {
     mockImageCache = {
       get: jest.fn(),
       set: jest.fn()
-    };
+    } as unknown as jest.Mocked<ImageCache>;
 
-    processor = new ImageProcessor(mockConfig, mockImageCache);
+    processor = new ImageProcessor(mockConfig as never, mockImageCache);
   });
 
   describe('constructor', () => {
     it('should initialize with config', () => {
-      expect(processor.config).toBe(mockConfig);
+      expect((processor as unknown as { config: unknown }).config).toBe(
+        mockConfig
+      );
     });
 
     it('should initialize with imageCache', () => {
-      expect(processor.imageCache).toBe(mockImageCache);
+      expect((processor as unknown as { imageCache: unknown }).imageCache).toBe(
+        mockImageCache
+      );
     });
 
     it('should handle null imageCache', () => {
-      const processorWithoutCache = new ImageProcessor(mockConfig, null);
+      const processorWithoutCache = new ImageProcessor(
+        mockConfig as never,
+        null
+      );
 
-      expect(processorWithoutCache.imageCache).toBeNull();
+      expect(
+        (processorWithoutCache as unknown as { imageCache: unknown }).imageCache
+      ).toBeNull();
     });
 
     it('should handle undefined imageCache', () => {
-      const processorWithoutCache = new ImageProcessor(mockConfig);
+      const processorWithoutCache = new ImageProcessor(mockConfig as never);
 
-      expect(processorWithoutCache.imageCache).toBeNull();
+      expect(
+        (processorWithoutCache as unknown as { imageCache: unknown }).imageCache
+      ).toBeNull();
     });
   });
 
   describe('resizeImage', () => {
-    let mockSharpInstance;
+    let mockSharpInstance: {
+      rotate: jest.Mock;
+      resize: jest.Mock;
+      jpeg: jest.Mock;
+      toBuffer: jest.Mock;
+    };
 
     beforeEach(() => {
       // Create a mock chain for sharp
@@ -81,13 +104,20 @@ describe('ImageProcessor', () => {
         toBuffer: jest.fn()
       };
 
-      sharp.mockReturnValue(mockSharpInstance);
+      (sharp as unknown as jest.Mock).mockReturnValue(mockSharpInstance);
     });
 
     it('should log resize dimensions', async () => {
       mockSharpInstance.toBuffer.mockResolvedValue(Buffer.from('test'));
 
-      await processor.resizeImage('/path/to/image.jpg', mockCallback);
+      await (
+        processor as unknown as {
+          resizeImage: (
+            _path: string,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).resizeImage('/path/to/image.jpg', mockCallback);
 
       expect(Log.log).toHaveBeenCalledWith('Resizing image to max: 1920x1080');
     });
@@ -95,7 +125,14 @@ describe('ImageProcessor', () => {
     it('should call sharp with input path', async () => {
       mockSharpInstance.toBuffer.mockResolvedValue(Buffer.from('test'));
 
-      await processor.resizeImage('/path/to/image.jpg', mockCallback);
+      await (
+        processor as unknown as {
+          resizeImage: (
+            _path: string,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).resizeImage('/path/to/image.jpg', mockCallback);
 
       expect(sharp).toHaveBeenCalledWith('/path/to/image.jpg');
     });
@@ -103,7 +140,14 @@ describe('ImageProcessor', () => {
     it('should rotate image', async () => {
       mockSharpInstance.toBuffer.mockResolvedValue(Buffer.from('test'));
 
-      await processor.resizeImage('/path/to/image.jpg', mockCallback);
+      await (
+        processor as unknown as {
+          resizeImage: (
+            _path: string,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).resizeImage('/path/to/image.jpg', mockCallback);
 
       expect(mockSharpInstance.rotate).toHaveBeenCalled();
     });
@@ -111,7 +155,14 @@ describe('ImageProcessor', () => {
     it('should resize with correct dimensions', async () => {
       mockSharpInstance.toBuffer.mockResolvedValue(Buffer.from('test'));
 
-      await processor.resizeImage('/path/to/image.jpg', mockCallback);
+      await (
+        processor as unknown as {
+          resizeImage: (
+            _path: string,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).resizeImage('/path/to/image.jpg', mockCallback);
 
       expect(mockSharpInstance.resize).toHaveBeenCalledWith({
         width: 1920,
@@ -123,7 +174,14 @@ describe('ImageProcessor', () => {
     it('should use JPEG format with quality settings', async () => {
       mockSharpInstance.toBuffer.mockResolvedValue(Buffer.from('test'));
 
-      await processor.resizeImage('/path/to/image.jpg', mockCallback);
+      await (
+        processor as unknown as {
+          resizeImage: (
+            _path: string,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).resizeImage('/path/to/image.jpg', mockCallback);
 
       expect(mockSharpInstance.jpeg).toHaveBeenCalledWith({
         quality: 80,
@@ -136,7 +194,14 @@ describe('ImageProcessor', () => {
       const testBuffer = Buffer.from('test-image-data');
       mockSharpInstance.toBuffer.mockResolvedValue(testBuffer);
 
-      await processor.resizeImage('/path/to/image.jpg', mockCallback);
+      await (
+        processor as unknown as {
+          resizeImage: (
+            _path: string,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).resizeImage('/path/to/image.jpg', mockCallback);
 
       const expectedDataUrl = `data:image/jpg;base64,${testBuffer.toString('base64')}`;
       expect(mockCallback).toHaveBeenCalledWith(expectedDataUrl);
@@ -145,7 +210,14 @@ describe('ImageProcessor', () => {
     it('should log completion', async () => {
       mockSharpInstance.toBuffer.mockResolvedValue(Buffer.from('test'));
 
-      await processor.resizeImage('/path/to/image.jpg', mockCallback);
+      await (
+        processor as unknown as {
+          resizeImage: (
+            _path: string,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).resizeImage('/path/to/image.jpg', mockCallback);
 
       expect(Log.log).toHaveBeenCalledWith('Resizing complete');
     });
@@ -154,18 +226,32 @@ describe('ImageProcessor', () => {
       const error = new Error('Sharp processing failed');
       mockSharpInstance.toBuffer.mockRejectedValue(error);
 
-      await processor.resizeImage('/path/to/image.jpg', mockCallback);
+      await (
+        processor as unknown as {
+          resizeImage: (
+            _path: string,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).resizeImage('/path/to/image.jpg', mockCallback);
 
       expect(Log.error).toHaveBeenCalledWith('Error resizing image:', error);
       expect(mockCallback).toHaveBeenCalledWith(null);
     });
 
     it('should parse maxWidth as integer', async () => {
-      mockConfig.maxWidth = '2560';
-      mockConfig.maxHeight = '1440';
+      mockConfig.maxWidth = '2560' as unknown as number;
+      mockConfig.maxHeight = '1440' as unknown as number;
       mockSharpInstance.toBuffer.mockResolvedValue(Buffer.from('test'));
 
-      await processor.resizeImage('/path/to/image.jpg', mockCallback);
+      await (
+        processor as unknown as {
+          resizeImage: (
+            _path: string,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).resizeImage('/path/to/image.jpg', mockCallback);
 
       expect(mockSharpInstance.resize).toHaveBeenCalledWith({
         width: 2560,
@@ -178,18 +264,32 @@ describe('ImageProcessor', () => {
   describe('readFileRaw', () => {
     it('should read file using fs promises', async () => {
       const testBuffer = Buffer.from('test-image-data');
-      fsPromises.readFile.mockResolvedValue(testBuffer);
+      (fsPromises.readFile as jest.Mock).mockResolvedValue(testBuffer);
 
-      await processor.readFileRaw('/path/to/image.jpg', mockCallback);
+      await (
+        processor as unknown as {
+          readFileRaw: (
+            _path: string,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).readFileRaw('/path/to/image.jpg', mockCallback);
 
       expect(fsPromises.readFile).toHaveBeenCalledWith('/path/to/image.jpg');
     });
 
     it('should extract file extension', async () => {
       const testBuffer = Buffer.from('test-image-data');
-      fsPromises.readFile.mockResolvedValue(testBuffer);
+      (fsPromises.readFile as jest.Mock).mockResolvedValue(testBuffer);
 
-      await processor.readFileRaw('/path/to/image.png', mockCallback);
+      await (
+        processor as unknown as {
+          readFileRaw: (
+            _path: string,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).readFileRaw('/path/to/image.png', mockCallback);
 
       const expectedDataUrl = `data:image/png;base64,${testBuffer.toString('base64')}`;
       expect(mockCallback).toHaveBeenCalledWith(expectedDataUrl);
@@ -197,27 +297,48 @@ describe('ImageProcessor', () => {
 
     it('should create data URL with correct format', async () => {
       const testBuffer = Buffer.from('test-image-data');
-      fsPromises.readFile.mockResolvedValue(testBuffer);
+      (fsPromises.readFile as jest.Mock).mockResolvedValue(testBuffer);
 
-      await processor.readFileRaw('/path/to/image.jpg', mockCallback);
+      await (
+        processor as unknown as {
+          readFileRaw: (
+            _path: string,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).readFileRaw('/path/to/image.jpg', mockCallback);
 
       const expectedDataUrl = `data:image/jpg;base64,${testBuffer.toString('base64')}`;
       expect(mockCallback).toHaveBeenCalledWith(expectedDataUrl);
     });
 
     it('should log completion', async () => {
-      fsPromises.readFile.mockResolvedValue(Buffer.from('test'));
+      (fsPromises.readFile as jest.Mock).mockResolvedValue(Buffer.from('test'));
 
-      await processor.readFileRaw('/path/to/image.jpg', mockCallback);
+      await (
+        processor as unknown as {
+          readFileRaw: (
+            _path: string,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).readFileRaw('/path/to/image.jpg', mockCallback);
 
       expect(Log.log).toHaveBeenCalledWith('File read complete');
     });
 
     it('should handle read errors', async () => {
       const error = new Error('File not found');
-      fsPromises.readFile.mockRejectedValue(error);
+      (fsPromises.readFile as jest.Mock).mockRejectedValue(error);
 
-      await processor.readFileRaw('/path/to/missing.jpg', mockCallback);
+      await (
+        processor as unknown as {
+          readFileRaw: (
+            _path: string,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).readFileRaw('/path/to/missing.jpg', mockCallback);
 
       expect(Log.error).toHaveBeenCalledWith('Error reading file:', error);
       expect(mockCallback).toHaveBeenCalledWith(null);
@@ -225,28 +346,45 @@ describe('ImageProcessor', () => {
 
     it('should handle different file extensions', async () => {
       const testBuffer = Buffer.from('test');
-      fsPromises.readFile.mockResolvedValue(testBuffer);
+      (fsPromises.readFile as jest.Mock).mockResolvedValue(testBuffer);
 
-      await processor.readFileRaw('/path/to/image.webp', mockCallback);
+      await (
+        processor as unknown as {
+          readFileRaw: (
+            _path: string,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).readFileRaw('/path/to/image.webp', mockCallback);
 
-      expect(mockCallback).toHaveBeenCalledWith(expect.stringContaining('data:image/webp;base64,'));
+      expect(mockCallback).toHaveBeenCalledWith(
+        expect.stringContaining('data:image/webp;base64,')
+      );
     });
   });
 
   describe('downloadSynologyImage', () => {
-    let mockSynologyClient;
+    let mockSynologyClient: jest.Mocked<SynologyPhotosClient>;
 
     beforeEach(() => {
       mockSynologyClient = {
         downloadPhoto: jest.fn()
-      };
+      } as unknown as jest.Mocked<SynologyPhotosClient>;
     });
 
     it('should check cache first when caching is enabled', async () => {
       const imageUrl = 'http://synology.local/photo/123';
       mockImageCache.get.mockResolvedValue('cached-data-url');
 
-      await processor.downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
+      await (
+        processor as unknown as {
+          downloadSynologyImage: (
+            _url: string,
+            _client: SynologyPhotosClient,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
 
       expect(mockImageCache.get).toHaveBeenCalledWith(imageUrl);
     });
@@ -256,7 +394,15 @@ describe('ImageProcessor', () => {
       const cachedData = 'data:image/jpeg;base64,cached123';
       mockImageCache.get.mockResolvedValue(cachedData);
 
-      await processor.downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
+      await (
+        processor as unknown as {
+          downloadSynologyImage: (
+            _url: string,
+            _client: SynologyPhotosClient,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
 
       expect(Log.info).toHaveBeenCalledWith('Serving image from cache');
       expect(mockCallback).toHaveBeenCalledWith(cachedData);
@@ -269,18 +415,35 @@ describe('ImageProcessor', () => {
       const imageBuffer = Buffer.from('test-image');
       mockSynologyClient.downloadPhoto.mockResolvedValue(imageBuffer);
 
-      await processor.downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
+      await (
+        processor as unknown as {
+          downloadSynologyImage: (
+            _url: string,
+            _client: SynologyPhotosClient,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
 
       expect(mockImageCache.get).not.toHaveBeenCalled();
     });
 
     it('should skip cache check when imageCache is null', async () => {
-      processor.imageCache = null;
+      (processor as unknown as { imageCache: ImageCache | null }).imageCache =
+        null;
       const imageUrl = 'http://synology.local/photo/123';
       const imageBuffer = Buffer.from('test-image');
       mockSynologyClient.downloadPhoto.mockResolvedValue(imageBuffer);
 
-      await processor.downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
+      await (
+        processor as unknown as {
+          downloadSynologyImage: (
+            _url: string,
+            _client: SynologyPhotosClient,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
 
       expect(mockCallback).toHaveBeenCalled();
     });
@@ -291,7 +454,15 @@ describe('ImageProcessor', () => {
       const imageBuffer = Buffer.from('test-image');
       mockSynologyClient.downloadPhoto.mockResolvedValue(imageBuffer);
 
-      await processor.downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
+      await (
+        processor as unknown as {
+          downloadSynologyImage: (
+            _url: string,
+            _client: SynologyPhotosClient,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
 
       expect(Log.info).toHaveBeenCalledWith('Downloading Synology image...');
       expect(mockSynologyClient.downloadPhoto).toHaveBeenCalledWith(imageUrl);
@@ -303,7 +474,15 @@ describe('ImageProcessor', () => {
       const imageBuffer = Buffer.from('test-image-data');
       mockSynologyClient.downloadPhoto.mockResolvedValue(imageBuffer);
 
-      await processor.downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
+      await (
+        processor as unknown as {
+          downloadSynologyImage: (
+            _url: string,
+            _client: SynologyPhotosClient,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
 
       const expectedDataUrl = `data:image/jpeg;base64,${imageBuffer.toString('base64')}`;
       expect(mockCallback).toHaveBeenCalledWith(expectedDataUrl);
@@ -315,9 +494,19 @@ describe('ImageProcessor', () => {
       const imageBuffer = Buffer.from('test-image-data');
       mockSynologyClient.downloadPhoto.mockResolvedValue(imageBuffer);
 
-      await processor.downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
+      await (
+        processor as unknown as {
+          downloadSynologyImage: (
+            _url: string,
+            _client: SynologyPhotosClient,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
 
-      expect(Log.info).toHaveBeenCalledWith(`Downloaded Synology image: ${imageBuffer.length} bytes`);
+      expect(Log.info).toHaveBeenCalledWith(
+        `Downloaded Synology image: ${imageBuffer.length} bytes`
+      );
     });
 
     it('should cache downloaded image when caching is enabled', async () => {
@@ -326,10 +515,21 @@ describe('ImageProcessor', () => {
       const imageBuffer = Buffer.from('test-image-data');
       mockSynologyClient.downloadPhoto.mockResolvedValue(imageBuffer);
 
-      await processor.downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
+      await (
+        processor as unknown as {
+          downloadSynologyImage: (
+            _url: string,
+            _client: SynologyPhotosClient,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
 
       const expectedDataUrl = `data:image/jpeg;base64,${imageBuffer.toString('base64')}`;
-      expect(mockImageCache.set).toHaveBeenCalledWith(imageUrl, expectedDataUrl);
+      expect(mockImageCache.set).toHaveBeenCalledWith(
+        imageUrl,
+        expectedDataUrl
+      );
     });
 
     it('should not cache when caching is disabled', async () => {
@@ -338,7 +538,15 @@ describe('ImageProcessor', () => {
       const imageBuffer = Buffer.from('test-image-data');
       mockSynologyClient.downloadPhoto.mockResolvedValue(imageBuffer);
 
-      await processor.downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
+      await (
+        processor as unknown as {
+          downloadSynologyImage: (
+            _url: string,
+            _client: SynologyPhotosClient,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
 
       expect(mockImageCache.set).not.toHaveBeenCalled();
     });
@@ -346,11 +554,23 @@ describe('ImageProcessor', () => {
     it('should handle null imageBuffer', async () => {
       const imageUrl = 'http://synology.local/photo/123';
       mockImageCache.get.mockResolvedValue(null);
-      mockSynologyClient.downloadPhoto.mockResolvedValue(null);
+      mockSynologyClient.downloadPhoto.mockResolvedValue(
+        null as unknown as Buffer
+      );
 
-      await processor.downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
+      await (
+        processor as unknown as {
+          downloadSynologyImage: (
+            _url: string,
+            _client: SynologyPhotosClient,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
 
-      expect(Log.error).toHaveBeenCalledWith('Failed to download Synology image');
+      expect(Log.error).toHaveBeenCalledWith(
+        'Failed to download Synology image'
+      );
       expect(mockCallback).toHaveBeenCalledWith(null);
     });
 
@@ -360,20 +580,30 @@ describe('ImageProcessor', () => {
       const error = new Error('Network error');
       mockSynologyClient.downloadPhoto.mockRejectedValue(error);
 
-      await processor.downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
+      await (
+        processor as unknown as {
+          downloadSynologyImage: (
+            _url: string,
+            _client: SynologyPhotosClient,
+            _callback: (_data: string | null) => void
+          ) => Promise<void>;
+        }
+      ).downloadSynologyImage(imageUrl, mockSynologyClient, mockCallback);
 
-      expect(Log.error).toHaveBeenCalledWith('Error downloading Synology image: Network error');
+      expect(Log.error).toHaveBeenCalledWith(
+        'Error downloading Synology image: Network error'
+      );
       expect(mockCallback).toHaveBeenCalledWith(null);
     });
   });
 
   describe('readFile', () => {
-    let mockSynologyClient;
+    let mockSynologyClient: jest.Mocked<SynologyPhotosClient>;
 
     beforeEach(() => {
       mockSynologyClient = {
         downloadPhoto: jest.fn()
-      };
+      } as unknown as jest.Mocked<SynologyPhotosClient>;
     });
 
     it('should delegate to downloadSynologyImage when imageUrl and synologyClient provided', async () => {
@@ -383,7 +613,12 @@ describe('ImageProcessor', () => {
       mockImageCache.get.mockResolvedValue(null);
       mockSynologyClient.downloadPhoto.mockResolvedValue(imageBuffer);
 
-      await processor.readFile(filepath, mockCallback, imageUrl, mockSynologyClient);
+      await processor.readFile(
+        filepath,
+        mockCallback,
+        imageUrl,
+        mockSynologyClient
+      );
 
       expect(mockSynologyClient.downloadPhoto).toHaveBeenCalledWith(imageUrl);
       expect(mockCallback).toHaveBeenCalled();
@@ -401,9 +636,14 @@ describe('ImageProcessor', () => {
         jpeg: jest.fn().mockReturnThis(),
         toBuffer: jest.fn()
       };
-      sharp.mockReturnValue(mockSharpInstance);
+      (sharp as unknown as jest.Mock).mockReturnValue(mockSharpInstance);
 
-      await processor.readFile(filepath, mockCallback, imageUrl, mockSynologyClient);
+      await processor.readFile(
+        filepath,
+        mockCallback,
+        imageUrl,
+        mockSynologyClient
+      );
 
       expect(sharp).not.toHaveBeenCalled();
     });
@@ -417,7 +657,7 @@ describe('ImageProcessor', () => {
         jpeg: jest.fn().mockReturnThis(),
         toBuffer: jest.fn().mockResolvedValue(Buffer.from('test'))
       };
-      sharp.mockReturnValue(mockSharpInstance);
+      (sharp as unknown as jest.Mock).mockReturnValue(mockSharpInstance);
 
       await processor.readFile(filepath, mockCallback);
 
@@ -428,7 +668,7 @@ describe('ImageProcessor', () => {
     it('should read raw file when resizeImages is false', async () => {
       mockConfig.resizeImages = false;
       const filepath = '/path/to/image.jpg';
-      fsPromises.readFile.mockResolvedValue(Buffer.from('test'));
+      (fsPromises.readFile as jest.Mock).mockResolvedValue(Buffer.from('test'));
 
       await processor.readFile(filepath, mockCallback);
 
@@ -440,9 +680,14 @@ describe('ImageProcessor', () => {
       mockConfig.resizeImages = false;
       const filepath = '/path/to/image.jpg';
       const imageUrl = 'http://synology.local/photo/123';
-      fsPromises.readFile.mockResolvedValue(Buffer.from('test'));
+      (fsPromises.readFile as jest.Mock).mockResolvedValue(Buffer.from('test'));
 
-      await processor.readFile(filepath, mockCallback, imageUrl, null);
+      await processor.readFile(
+        filepath,
+        mockCallback,
+        imageUrl,
+        null as unknown as SynologyPhotosClient
+      );
 
       // Should treat as local file
       expect(fsPromises.readFile).toHaveBeenCalledWith(filepath);
@@ -451,9 +696,14 @@ describe('ImageProcessor', () => {
     it('should handle synologyClient without imageUrl', async () => {
       mockConfig.resizeImages = false;
       const filepath = '/path/to/image.jpg';
-      fsPromises.readFile.mockResolvedValue(Buffer.from('test'));
+      (fsPromises.readFile as jest.Mock).mockResolvedValue(Buffer.from('test'));
 
-      await processor.readFile(filepath, mockCallback, null, mockSynologyClient);
+      await processor.readFile(
+        filepath,
+        mockCallback,
+        null as unknown as string,
+        mockSynologyClient
+      );
 
       // Should treat as local file
       expect(fsPromises.readFile).toHaveBeenCalledWith(filepath);
@@ -469,7 +719,7 @@ describe('ImageProcessor', () => {
         jpeg: jest.fn().mockReturnThis(),
         toBuffer: jest.fn().mockResolvedValue(Buffer.from('resized-image'))
       };
-      sharp.mockReturnValue(mockSharpInstance);
+      (sharp as unknown as jest.Mock).mockReturnValue(mockSharpInstance);
 
       await processor.readFile(filepath, mockCallback);
 
@@ -477,31 +727,40 @@ describe('ImageProcessor', () => {
       expect(mockSharpInstance.rotate).toHaveBeenCalled();
       expect(mockSharpInstance.resize).toHaveBeenCalled();
       expect(mockSharpInstance.jpeg).toHaveBeenCalled();
-      expect(mockCallback).toHaveBeenCalledWith(expect.stringContaining('data:image/jpg;base64,'));
+      expect(mockCallback).toHaveBeenCalledWith(
+        expect.stringContaining('data:image/jpg;base64,')
+      );
     });
 
     it('should handle complete raw file read workflow', async () => {
       mockConfig.resizeImages = false;
       const filepath = '/path/to/image.jpg';
       const testBuffer = Buffer.from('raw-image-data');
-      fsPromises.readFile.mockResolvedValue(testBuffer);
+      (fsPromises.readFile as jest.Mock).mockResolvedValue(testBuffer);
 
       await processor.readFile(filepath, mockCallback);
 
       expect(fsPromises.readFile).toHaveBeenCalledWith(filepath);
-      expect(mockCallback).toHaveBeenCalledWith(`data:image/jpg;base64,${testBuffer.toString('base64')}`);
+      expect(mockCallback).toHaveBeenCalledWith(
+        `data:image/jpg;base64,${testBuffer.toString('base64')}`
+      );
     });
 
     it('should handle complete Synology download with cache workflow', async () => {
       const imageUrl = 'http://synology.local/photo/123';
       const mockSynologyClient = {
         downloadPhoto: jest.fn()
-      };
+      } as unknown as jest.Mocked<SynologyPhotosClient>;
       const imageBuffer = Buffer.from('synology-image');
       mockImageCache.get.mockResolvedValue(null);
       mockSynologyClient.downloadPhoto.mockResolvedValue(imageBuffer);
 
-      await processor.readFile('/dummy', mockCallback, imageUrl, mockSynologyClient);
+      await processor.readFile(
+        '/dummy',
+        mockCallback,
+        imageUrl,
+        mockSynologyClient
+      );
 
       // Should check cache
       expect(mockImageCache.get).toHaveBeenCalledWith(imageUrl);
@@ -510,18 +769,25 @@ describe('ImageProcessor', () => {
       // Should cache result
       expect(mockImageCache.set).toHaveBeenCalled();
       // Should callback with data
-      expect(mockCallback).toHaveBeenCalledWith(expect.stringContaining('data:image/jpeg;base64,'));
+      expect(mockCallback).toHaveBeenCalledWith(
+        expect.stringContaining('data:image/jpeg;base64,')
+      );
     });
 
     it('should serve from cache on subsequent Synology requests', async () => {
       const imageUrl = 'http://synology.local/photo/123';
       const mockSynologyClient = {
         downloadPhoto: jest.fn()
-      };
+      } as unknown as jest.Mocked<SynologyPhotosClient>;
       const cachedData = 'data:image/jpeg;base64,cached123';
       mockImageCache.get.mockResolvedValue(cachedData);
 
-      await processor.readFile('/dummy', mockCallback, imageUrl, mockSynologyClient);
+      await processor.readFile(
+        '/dummy',
+        mockCallback,
+        imageUrl,
+        mockSynologyClient
+      );
 
       expect(mockImageCache.get).toHaveBeenCalledWith(imageUrl);
       expect(mockSynologyClient.downloadPhoto).not.toHaveBeenCalled();

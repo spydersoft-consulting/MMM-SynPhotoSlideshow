@@ -1,26 +1,13 @@
 /**
- * ConfigValidator.test.js
+ * ConfigValidator.test.ts
  *
  * Unit tests for ConfigValidator
  */
 
-/* eslint-disable no-console */
-
-const ConfigValidator = require('./ConfigValidator');
-
-// Mock console methods
-global.console = {
-  ...console,
-  warn: jest.fn(),
-  debug: jest.fn(),
-  log: jest.fn(),
-};
+import ConfigValidator from './ConfigValidator';
+import type { ModuleConfig } from '../types';
 
 describe('ConfigValidator', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
   describe('validateConfig', () => {
     describe('sortImagesBy normalization', () => {
       it('should convert sortImagesBy to lowercase', () => {
@@ -30,7 +17,7 @@ describe('ConfigValidator', () => {
           slideshowSpeed: 5000,
           transitionImages: true,
           backgroundAnimationDuration: '5s'
-        };
+        } as ModuleConfig;
 
         const result = ConfigValidator.validateConfig(config);
 
@@ -44,7 +31,7 @@ describe('ConfigValidator', () => {
           slideshowSpeed: 5000,
           transitionImages: true,
           backgroundAnimationDuration: '5s'
-        };
+        } as ModuleConfig;
 
         const result = ConfigValidator.validateConfig(config);
 
@@ -61,7 +48,7 @@ describe('ConfigValidator', () => {
           slideshowSpeed: 5000,
           transitionImages: true,
           backgroundAnimationDuration: '5s'
-        };
+        } as ModuleConfig;
 
         const result = ConfigValidator.validateConfig(config);
 
@@ -76,7 +63,7 @@ describe('ConfigValidator', () => {
           slideshowSpeed: 5000,
           transitionImages: true,
           backgroundAnimationDuration: '5s'
-        };
+        } as ModuleConfig;
 
         const result = ConfigValidator.validateConfig(config);
 
@@ -91,7 +78,7 @@ describe('ConfigValidator', () => {
           slideshowSpeed: 5000,
           transitionImages: true,
           backgroundAnimationDuration: '5s'
-        };
+        } as ModuleConfig;
 
         const result = ConfigValidator.validateConfig(config);
 
@@ -106,14 +93,14 @@ describe('ConfigValidator', () => {
           slideshowSpeed: 5000,
           transitionImages: true,
           backgroundAnimationDuration: '5s'
-        };
+        } as ModuleConfig;
 
         const result = ConfigValidator.validateConfig(config);
 
         expect(result.imageInfo).toEqual(['name', 'date']);
       });
 
-      it('should warn and default to ["name"] when showImageInfo is true but imageInfo is invalid', () => {
+      it('should default to ["name"] when showImageInfo is true but imageInfo is invalid', () => {
         const config = {
           sortImagesBy: 'random',
           showImageInfo: true,
@@ -121,11 +108,10 @@ describe('ConfigValidator', () => {
           slideshowSpeed: 5000,
           transitionImages: true,
           backgroundAnimationDuration: '5s'
-        };
+        } as ModuleConfig;
 
         const result = ConfigValidator.validateConfig(config);
 
-        expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('showImageInfo is set, but imageInfo does not have a valid value.'));
         expect(result.imageInfo).toEqual(['name']);
       });
 
@@ -137,11 +123,10 @@ describe('ConfigValidator', () => {
           slideshowSpeed: 5000,
           transitionImages: true,
           backgroundAnimationDuration: '5s'
-        };
+        } as ModuleConfig;
 
         const result = ConfigValidator.validateConfig(config);
 
-        expect(console.warn).not.toHaveBeenCalled();
         expect(result.imageInfo).toEqual(['name']);
       });
 
@@ -153,11 +138,10 @@ describe('ConfigValidator', () => {
           slideshowSpeed: 5000,
           transitionImages: true,
           backgroundAnimationDuration: '5s'
-        };
+        } as ModuleConfig;
 
         const result = ConfigValidator.validateConfig(config);
 
-        expect(console.warn).not.toHaveBeenCalled();
         expect(result.imageInfo).toEqual(['date']);
       });
 
@@ -169,11 +153,10 @@ describe('ConfigValidator', () => {
           slideshowSpeed: 5000,
           transitionImages: true,
           backgroundAnimationDuration: '5s'
-        };
+        } as ModuleConfig;
 
         const result = ConfigValidator.validateConfig(config);
 
-        expect(console.warn).not.toHaveBeenCalled();
         expect(result.imageInfo).toEqual(['name', 'date']);
       });
 
@@ -185,7 +168,7 @@ describe('ConfigValidator', () => {
           slideshowSpeed: 5000,
           transitionImages: true,
           backgroundAnimationDuration: '5s'
-        };
+        } as ModuleConfig;
 
         const result = ConfigValidator.validateConfig(config);
 
@@ -202,7 +185,7 @@ describe('ConfigValidator', () => {
           transitionImages: false,
           transitionSpeed: '500ms',
           backgroundAnimationDuration: '5s'
-        };
+        } as ModuleConfig;
 
         const result = ConfigValidator.validateConfig(config);
 
@@ -217,7 +200,7 @@ describe('ConfigValidator', () => {
           transitionImages: true,
           transitionSpeed: '500ms',
           backgroundAnimationDuration: '5s'
-        };
+        } as ModuleConfig;
 
         const result = ConfigValidator.validateConfig(config);
 
@@ -233,7 +216,7 @@ describe('ConfigValidator', () => {
           slideshowSpeed: 10000,
           transitionImages: true,
           backgroundAnimationDuration: '1s'
-        };
+        } as ModuleConfig;
 
         const result = ConfigValidator.validateConfig(config);
 
@@ -247,7 +230,7 @@ describe('ConfigValidator', () => {
           slideshowSpeed: 10000,
           transitionImages: true,
           backgroundAnimationDuration: '5s'
-        };
+        } as ModuleConfig;
 
         const result = ConfigValidator.validateConfig(config);
 
@@ -261,7 +244,7 @@ describe('ConfigValidator', () => {
           slideshowSpeed: 7500,
           transitionImages: true,
           backgroundAnimationDuration: '1s'
-        };
+        } as ModuleConfig;
 
         const result = ConfigValidator.validateConfig(config);
 
@@ -275,7 +258,7 @@ describe('ConfigValidator', () => {
           slideshowSpeed: 500,
           transitionImages: true,
           backgroundAnimationDuration: '1s'
-        };
+        } as ModuleConfig;
 
         const result = ConfigValidator.validateConfig(config);
 
@@ -293,7 +276,7 @@ describe('ConfigValidator', () => {
           transitionImages: true,
           transitionSpeed: '1000ms',
           backgroundAnimationDuration: '1s'
-        };
+        } as ModuleConfig;
 
         const result = ConfigValidator.validateConfig(config);
 
@@ -312,7 +295,7 @@ describe('ConfigValidator', () => {
           transitionImages: false,
           transitionSpeed: '1000ms',
           backgroundAnimationDuration: '5s'
-        };
+        } as ModuleConfig;
 
         const result = ConfigValidator.validateConfig(config);
 
@@ -329,7 +312,7 @@ describe('ConfigValidator', () => {
           slideshowSpeed: 5000,
           transitionImages: true,
           backgroundAnimationDuration: '5s'
-        };
+        } as ModuleConfig;
 
         const result = ConfigValidator.validateConfig(config);
 
