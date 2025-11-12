@@ -4,11 +4,13 @@ import globals from 'globals';
 import {flatConfigs as importX} from 'eslint-plugin-import-x';
 import js from '@eslint/js';
 import markdown from '@eslint/markdown';
+import prettierConfig from 'eslint-config-prettier';
 import stylistic from '@stylistic/eslint-plugin';
+import tseslint from 'typescript-eslint';
 
 export default defineConfig([
   {
-    'ignores': ['coverage/**', '__mocks__/**']
+    'ignores': ['coverage/**', '__mocks__/**', 'output/**', '*.js', '!*.config.js', '!*.config.mjs', 'node_modules/**']
   },
   {
     'files': ['**/*.css'],
@@ -18,12 +20,22 @@ export default defineConfig([
     'extends': ['css/recommended'],
     'rules': {
       'css/use-baseline': ['error', {'available': 'newly'}],
-      'css/no-important': 'off'
+      'css/no-important': 'off',
+      'css/no-empty-blocks': 'off'
     }
   },
+  ...tseslint.configs.recommended,
   {
-    'files': ['**/*.js'],
+    'files': ['**/*.ts', '**/*.js'],
     'languageOptions': {
+      parser: tseslint.parser,
+      parserOptions: {
+        sourceType: "module",
+        ecmaVersion: 2017,
+        ecmaFeatures: {
+          globalReturn: true
+        }
+      },
       'globals': {
         ...globals.browser,
         ...globals.node,
@@ -34,7 +46,10 @@ export default defineConfig([
         'Module': 'readonly',
         'TransitionHandler': 'readonly',
         'UIBuilder': 'readonly',
-        'moment': 'readonly'
+        'moment': 'readonly',
+        'NodeJS': 'readonly',
+        config: true,
+        MM: true
       }
     },
     'plugins': {js,
@@ -51,6 +66,7 @@ export default defineConfig([
       '@stylistic/padded-blocks': 'off',
       '@stylistic/quote-props': ['error', 'as-needed'],
       '@stylistic/quotes': ['error', 'single'],
+      '@typescript-eslint/no-explicit-any': 'warn',
       'camelcase': 'off',
       'capitalized-comments': 'off',
       'class-methods-use-this': 'off',
@@ -58,6 +74,7 @@ export default defineConfig([
       'consistent-this': 'off',
       'curly': 'off',
       'id-length': 'off',
+      'import-x/no-unresolved': 'off',
       'init-declarations': 'off',
       'line-comment-position': 'off',
       'max-depth': ['error', 5],
@@ -78,19 +95,25 @@ export default defineConfig([
       'no-param-reassign': 'off',
       'no-plusplus': 'off',
       'no-ternary': 'off',
+      'no-undefined': 'off',
       'no-underscore-dangle': 'off',
+      'no-unused-vars': 'off',
+      'no-void': ['error', {'allowAsStatement': true}],
       'no-warning-comments': 'off',
       'one-var': ['error', 'never'],
       'require-await': 'off',
+      'sort-imports': 'off',
       'sort-keys': 'off'
     }
   },
   {
-    'files': ['**/*.test.js'],
+    'files': ['**/*.test.js', '**/*.test.ts'],
     'languageOptions': {
+      parser: tseslint.parser,
       'globals': {
         ...globals.node,
-        ...globals.jest
+        ...globals.jest,
+        'NodeJS': 'readonly'
       }
     },
     'plugins': {js,
@@ -135,10 +158,14 @@ export default defineConfig([
       'no-plusplus': 'off',
       'no-ternary': 'off',
       'no-underscore-dangle': 'off',
+      'no-unused-vars': 'off',
       'no-warning-comments': 'off',
       'one-var': ['error', 'never'],
       'require-await': 'off',
-      'sort-keys': 'off'
+      'sort-keys': 'off',
+      'import-x/no-unresolved': 'off',
+      'no-undefined': 'off',
+      'sort-imports': 'off'
     }
   },
   {
@@ -173,5 +200,6 @@ export default defineConfig([
     'rules': {
       'markdown/fenced-code-language': 'off'
     }
-  }
+  },
+  prettierConfig
 ]);

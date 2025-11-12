@@ -4,3 +4,18 @@ node_modules
 .env
 .image-cache/
 coverage/
+output/
+*.js
+!*.config.js
+!*.config.mjs
+!__mocks__/**/*.js
+.eslintcache
+
+# Ignore rollup output
+MMM-SynPhotoSlideshow.js
+node_helper.js
+SynPhotoSlideshow.css
+.eslintcache
+
+output/*
+junit.xml
