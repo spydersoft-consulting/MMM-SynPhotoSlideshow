@@ -40,7 +40,7 @@ interface NotificationCallbacks {
 export default class ModuleController {
   private config: ModuleConfig;
 
-  private identifier: string;
+  private readonly identifier: string;
 
   private imageHandler: ImageHandler | null = null;
 
@@ -64,13 +64,13 @@ export default class ModuleController {
 
   private savedIndex: number | null = null;
 
-  private callbacks: NotificationCallbacks;
+  private readonly callbacks: NotificationCallbacks;
 
-  private Log: LoggerInterface;
+  private readonly Log: LoggerInterface;
 
-  private moment: MomentInterface;
+  private readonly moment: MomentInterface;
 
-  private EXIF: EXIFInterface;
+  private readonly EXIF: EXIFInterface;
 
   constructor(
     config: ModuleConfig,

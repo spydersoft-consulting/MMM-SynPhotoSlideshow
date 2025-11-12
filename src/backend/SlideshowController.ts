@@ -25,11 +25,11 @@ export interface NotificationCallback {
  * Handles all business logic for the slideshow module
  */
 export default class SlideshowController {
-  private imageListManager: ImageListManager;
+  private readonly imageListManager: ImageListManager;
 
-  private timerManager: TimerManager;
+  private readonly timerManager: TimerManager;
 
-  private synologyManager: SynologyManager;
+  private readonly synologyManager: SynologyManager;
 
   private imageCache: ImageCache | null = null;
 
@@ -41,7 +41,7 @@ export default class SlideshowController {
 
   private isRetryingImageLoad = false;
 
-  private notificationCallback: NotificationCallback;
+  private readonly notificationCallback: NotificationCallback;
 
   constructor(notificationCallback: NotificationCallback) {
     this.notificationCallback = notificationCallback;
