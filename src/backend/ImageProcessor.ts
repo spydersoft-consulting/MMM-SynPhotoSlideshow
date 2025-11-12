@@ -15,9 +15,9 @@ interface SynologyClient {
 }
 
 class ImageProcessor {
-  private config: Partial<ModuleConfig>;
+  private readonly config: Partial<ModuleConfig>;
 
-  private imageCache: ImageCache | null;
+  private readonly imageCache: ImageCache | null;
 
   constructor(
     config: Partial<ModuleConfig>,

@@ -24,7 +24,7 @@ type ImageDownloadCallback = (
 ) => void;
 
 class ImageCache {
-  private config: Partial<ModuleConfig>;
+  private readonly config: Partial<ModuleConfig>;
 
   private cache: NodeCache | null = null;
 
@@ -38,7 +38,7 @@ class ImageCache {
 
   private maxCacheSize = 0;
 
-  private preloadDelay: number;
+  private readonly preloadDelay: number;
 
   constructor(config: Partial<ModuleConfig>) {
     this.config = config;

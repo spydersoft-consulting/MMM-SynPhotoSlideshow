@@ -41,17 +41,17 @@ interface TagIds {
 }
 
 class SynologyPhotosClient {
-  private baseUrl: string;
+  private readonly baseUrl: string;
 
-  private account: string;
+  private readonly account: string;
 
-  private password: string;
+  private readonly password: string;
 
-  private albumName: string;
+  private readonly albumName: string;
 
-  private shareToken: string;
+  private readonly shareToken: string;
 
-  private tagNames: string[];
+  private readonly tagNames: string[];
 
   private sid: string | null = null;
 

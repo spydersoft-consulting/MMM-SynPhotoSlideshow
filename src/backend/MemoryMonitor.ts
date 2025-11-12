@@ -8,17 +8,17 @@ import Log from './Logger';
 import type { ModuleConfig } from '../types';
 
 class MemoryMonitor {
-  private config: Partial<ModuleConfig>;
+  private readonly config: Partial<ModuleConfig>;
 
-  private monitorInterval: number;
+  private readonly monitorInterval: number;
 
-  private memoryThreshold: number;
+  private readonly memoryThreshold: number;
 
   private timer: NodeJS.Timeout | null = null;
 
   private lastCleanup: number;
 
-  private cleanupCallbacks: Array<() => void> = [];
+  private readonly cleanupCallbacks: Array<() => void> = [];
 
   constructor(config: Partial<ModuleConfig> = {}) {
     this.config = config;
@@ -103,9 +103,9 @@ class MemoryMonitor {
     }
 
     // Force garbage collection if available (requires --expose-gc flag)
-    if (global.gc) {
+    if (globalThis.gc) {
       Log.info('Running garbage collection');
-      global.gc();
+      globalThis.gc();
     }
   }
 

@@ -67,20 +67,23 @@ class ImageListManager {
     switch (sortBy) {
       case 'created':
         Log.debug('Sorting by created date...');
-        sortedList = imageList.sort(this.sortByCreated);
+        imageList.sort(this.sortByCreated);
+        sortedList = imageList;
         break;
       case 'modified':
         Log.debug('Sorting by modified date...');
-        sortedList = imageList.sort(this.sortByModified);
+        imageList.sort(this.sortByModified);
+        sortedList = imageList;
         break;
       default:
         Log.debug('Sorting by name...');
-        sortedList = imageList.sort(this.sortByFilename);
+        imageList.sort(this.sortByFilename);
+        sortedList = imageList;
     }
 
     if (sortDescending === true) {
       Log.debug('Reversing sort order...');
-      sortedList = sortedList.reverse();
+      sortedList.reverse();
     }
 
     return sortedList;
