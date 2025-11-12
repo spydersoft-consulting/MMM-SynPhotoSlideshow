@@ -12,7 +12,7 @@ declare const Log: {
 };
 
 class UIBuilder {
-  private config: ModuleConfig;
+  private readonly config: ModuleConfig;
 
   constructor(config: ModuleConfig) {
     this.config = config;

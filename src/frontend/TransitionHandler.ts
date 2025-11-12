@@ -7,7 +7,7 @@
 import type { ModuleConfig } from '../types';
 
 class TransitionHandler {
-  private config: ModuleConfig;
+  private readonly config: ModuleConfig;
 
   constructor(config: ModuleConfig) {
     this.config = config;

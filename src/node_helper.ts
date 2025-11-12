@@ -50,7 +50,7 @@ interface HelperModule extends NodeHelperInstance {
   refreshImageList: () => Promise<void>;
 }
 
-const helperModule: Partial<HelperModule> & ThisType<HelperModule> = {
+const helperModule: Partial<HelperModule> = {
   start(this: HelperModule): void {
     this.imageListManager = new ImageListManager();
     this.timerManager = new TimerManager();
@@ -68,7 +68,7 @@ const helperModule: Partial<HelperModule> & ThisType<HelperModule> = {
     config: ModuleConfig,
     sendNotification = false
   ): Promise<void> {
-    if (!config || !config.synologyUrl) {
+    if (!config?.synologyUrl) {
       this.sendSocketNotification('BACKGROUNDSLIDESHOW_REGISTER_CONFIG');
       return;
     }

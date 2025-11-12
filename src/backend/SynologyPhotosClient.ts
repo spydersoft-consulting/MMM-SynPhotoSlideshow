@@ -59,13 +59,13 @@ class SynologyPhotosClient {
 
   private tagIds: TagIds = {};
 
-  private useSharedAlbum: boolean;
+  private readonly useSharedAlbum: boolean;
 
-  private maxPhotosToFetch: number;
+  private readonly maxPhotosToFetch: number;
 
-  private authApiPath = '/webapi/auth.cgi';
+  private readonly authApiPath = '/webapi/auth.cgi';
 
-  private photosApiPath = '/webapi/entry.cgi';
+  private readonly photosApiPath = '/webapi/entry.cgi';
 
   constructor(config: ModuleConfig) {
     this.baseUrl = config.synologyUrl;

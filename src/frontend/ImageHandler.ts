@@ -13,9 +13,9 @@ declare const EXIF: {
 };
 
 class ImageHandler {
-  private config: ModuleConfig;
+  private readonly config: ModuleConfig;
 
-  private browserSupportsExifOrientationNatively: boolean;
+  private readonly browserSupportsExifOrientationNatively: boolean;
 
   constructor(config: ModuleConfig) {
     this.config = config;
