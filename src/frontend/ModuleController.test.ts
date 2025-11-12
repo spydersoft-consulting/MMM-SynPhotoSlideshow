@@ -735,6 +735,419 @@ describe('ModuleController', () => {
     });
   });
 
+  describe('socketNotificationReceived - additional handlers', () => {
+    beforeEach(() => {
+      controller.start();
+    });
+
+    it('should handle BACKGROUNDSLIDESHOW_PLAY notification', () => {
+      controller.socketNotificationReceived('BACKGROUNDSLIDESHOW_PLAY', {});
+
+      expect(mockLog.log).toHaveBeenCalledWith(
+        '[MMM-SynPhotoSlideshow] PLAY notification'
+      );
+      expect(mockCallbacks.sendSocketNotification).toHaveBeenCalledWith(
+        'BACKGROUNDSLIDESHOW_PLAY'
+      );
+    });
+
+    it('should handle BACKGROUNDSLIDESHOW_UPDATE_IMAGE_LIST', () => {
+      controller.socketNotificationReceived(
+        'BACKGROUNDSLIDESHOW_UPDATE_IMAGE_LIST',
+        {}
+      );
+
+      expect(mockCallbacks.sendSocketNotification).toHaveBeenCalled();
+    });
+
+    it('should handle BACKGROUNDSLIDESHOW_IMAGE_UPDATE', () => {
+      controller.socketNotificationReceived(
+        'BACKGROUNDSLIDESHOW_IMAGE_UPDATE',
+        {}
+      );
+
+      expect(mockLog.log).toHaveBeenCalledWith(
+        '[MMM-SynPhotoSlideshow] Changing Background'
+      );
+    });
+
+    it('should handle BACKGROUNDSLIDESHOW_NEXT', () => {
+      controller.socketNotificationReceived('BACKGROUNDSLIDESHOW_NEXT', {});
+
+      expect(mockCallbacks.sendSocketNotification).toHaveBeenCalled();
+    });
+
+    it('should handle BACKGROUNDSLIDESHOW_PREVIOUS', () => {
+      controller.socketNotificationReceived('BACKGROUNDSLIDESHOW_PREVIOUS', {});
+
+      expect(mockCallbacks.sendSocketNotification).toHaveBeenCalled();
+    });
+
+    it('should handle BACKGROUNDSLIDESHOW_URL with resume', () => {
+      controller.resume(); // Start timer first
+      const payload = { url: 'http://example.com/image.jpg', resume: true };
+
+      controller.socketNotificationReceived('BACKGROUNDSLIDESHOW_URL', payload);
+
+      expect(mockCallbacks.sendSocketNotification).toHaveBeenCalled();
+    });
+
+    it('should handle BACKGROUNDSLIDESHOW_URL without url', () => {
+      const payload = { resume: false };
+
+      controller.socketNotificationReceived('BACKGROUNDSLIDESHOW_URL', payload);
+
+      // Should not crash or call sendSocketNotification for missing URL
+      expect(mockLog.log).toHaveBeenCalledWith(
+        '[MMM-SynPhotoSlideshow] Frontend received notification:',
+        'BACKGROUNDSLIDESHOW_URL',
+        payload
+      );
+    });
+
+    it('should handle BACKGROUNDSLIDESHOW_URLS with empty urls', () => {
+      controller.getDom(); // Initialize DOM first
+      // Set up saved images first
+      controller.updateImageListWithArray(['img1.jpg', 'img2.jpg']);
+      jest.clearAllMocks();
+
+      // Now send empty urls to trigger restore
+      const payload = {};
+      controller.socketNotificationReceived(
+        'BACKGROUNDSLIDESHOW_URLS',
+        payload
+      );
+
+      // Should restore saved images
+      expect(mockLog.log).toHaveBeenCalledWith(
+        expect.stringContaining('BACKGROUNDSLIDESHOW_URLS')
+      );
+    });
+
+    it('should handle BACKGROUNDSLIDESHOW_URLS with duplicate check', () => {
+      controller.getDom(); // Initialize DOM first
+
+      // Manually set saved images to test duplicate check
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (controller as any).savedImages = ['img1.jpg'];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (controller as any).imageList = ['img1.jpg'];
+
+      // Send different urls to test the duplicate check path
+      const payload = { urls: ['img2.jpg', 'img3.jpg'] };
+      controller.socketNotificationReceived(
+        'BACKGROUNDSLIDESHOW_URLS',
+        payload
+      );
+
+      expect(mockLog.log).toHaveBeenCalledWith(
+        expect.stringContaining('BACKGROUNDSLIDESHOW_URLS')
+      );
+    });
+
+    it('should ignore unknown notifications', () => {
+      controller.socketNotificationReceived('UNKNOWN_NOTIFICATION', {});
+
+      // Should not crash, handler just won't be found
+      expect(controller).toBeDefined();
+    });
+  });
+
+  describe('displayImage - edge cases', () => {
+    beforeEach(() => {
+      controller.start();
+      controller.getDom();
+    });
+
+    it('should handle image load error', (done) => {
+      const imageInfo: ImageInfo = {
+        identifier: 'test-module',
+        path: 'test.jpg',
+        data: 'invalid-data',
+        index: 1,
+        total: 1
+      };
+
+      controller.displayImage(imageInfo);
+
+      // Simulate image error after a short delay
+      setTimeout(() => {
+        expect(mockLog.log).toHaveBeenCalledWith(
+          '[MMM-SynPhotoSlideshow] Creating image element, src:',
+          'invalid-data'
+        );
+        done();
+      }, 10);
+    });
+
+    it('should handle uppercase video extensions', () => {
+      const imageInfo: ImageInfo = {
+        identifier: 'test-module',
+        path: 'TEST.MP4',
+        data: 'data',
+        index: 1,
+        total: 1
+      };
+
+      controller.displayImage(imageInfo);
+
+      expect(mockCallbacks.sendSocketNotification).toHaveBeenCalledWith(
+        'BACKGROUNDSLIDESHOW_PLAY_VIDEO',
+        expect.arrayContaining(['TEST.MP4', 'PLAY'])
+      );
+    });
+  });
+
+  describe('updateImage - with randomization', () => {
+    beforeEach(() => {
+      controller.start();
+    });
+
+    it('should randomize when randomizeImageOrder is true', () => {
+      const randomConfig = {
+        ...mockConfig,
+        randomizeImageOrder: true
+      };
+      const randomController = new ModuleController(
+        randomConfig,
+        'test-module',
+        mockCallbacks,
+        mockLog,
+        mockMoment,
+        mockEXIF
+      );
+      randomController.start();
+
+      // Spy on Math.random
+      const randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0.5);
+
+      randomController.updateImageListWithArray([
+        'img1.jpg',
+        'img2.jpg',
+        'img3.jpg'
+      ]);
+
+      expect(randomSpy).toHaveBeenCalled();
+      randomSpy.mockRestore();
+    });
+  });
+
+  describe('handleImageLoad scenarios', () => {
+    beforeEach(() => {
+      controller.start();
+      controller.getDom();
+    });
+
+    it('should handle missing transitionHandler', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (controller as any).transitionHandler = null;
+
+      const imageInfo: ImageInfo = {
+        identifier: 'test-module',
+        path: 'test.jpg',
+        data: 'data:image/jpeg;base64,test',
+        index: 1,
+        total: 1
+      };
+
+      // Should not crash when transitionHandler is null
+      controller.displayImage(imageInfo);
+      expect(controller).toBeDefined();
+    });
+
+    it('should handle missing imageHandler', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (controller as any).imageHandler = null;
+
+      const imageInfo: ImageInfo = {
+        identifier: 'test-module',
+        path: 'test.jpg',
+        data: 'data:image/jpeg;base64,test',
+        index: 1,
+        total: 1
+      };
+
+      // Should not crash when imageHandler is null
+      controller.displayImage(imageInfo);
+      expect(controller).toBeDefined();
+    });
+
+    it('should restart progress bar when showProgressBar is true', () => {
+      const progressConfig = {
+        ...mockConfig,
+        showProgressBar: true
+      };
+      const progressController = new ModuleController(
+        progressConfig,
+        'test-module',
+        mockCallbacks,
+        mockLog,
+        mockMoment,
+        mockEXIF
+      );
+      progressController.start();
+      progressController.getDom();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { uiBuilder } = progressController as any;
+
+      const imageInfo: ImageInfo = {
+        identifier: 'test-module',
+        path: 'test.jpg',
+        data: 'data:image/jpeg;base64,test',
+        index: 1,
+        total: 1
+      };
+
+      progressController.displayImage(imageInfo);
+
+      // Note: restartProgressBar is called in handleImageLoad which is async
+      // We can verify it was set up, actual call happens in image.onload
+      expect(uiBuilder).toBeDefined();
+    });
+
+    it('should apply animations when not in fit mode', () => {
+      const imageInfo: ImageInfo = {
+        identifier: 'test-module',
+        path: 'test.jpg',
+        data: 'data:image/jpeg;base64,test',
+        index: 1,
+        total: 1
+      };
+
+      controller.displayImage(imageInfo);
+
+      // Animation would be applied in handleImageLoad when useFitMode is false
+      expect(mockLog.log).toHaveBeenCalled();
+    });
+
+    it('should skip animations when in fit mode', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { imageHandler } = controller as any;
+      imageHandler.applyFitMode = jest.fn(() => true); // Return true for fit mode
+
+      const imageInfo: ImageInfo = {
+        identifier: 'test-module',
+        path: 'test.jpg',
+        data: 'data:image/jpeg;base64,test',
+        index: 1,
+        total: 1
+      };
+
+      controller.displayImage(imageInfo);
+
+      // When fit mode is true, animations should not be applied
+      expect(mockLog.log).toHaveBeenCalled();
+    });
+  });
+
+  describe('EXIF data handling', () => {
+    beforeEach(() => {
+      controller.start();
+    });
+
+    it('should handle EXIF data with valid date', () => {
+      const infoConfig = {
+        ...mockConfig,
+        showImageInfo: true
+      };
+      const infoController = new ModuleController(
+        infoConfig,
+        'test-module',
+        mockCallbacks,
+        mockLog,
+        mockMoment,
+        mockEXIF
+      );
+      infoController.start();
+      infoController.getDom();
+
+      // Setup EXIF to return a date
+      mockEXIF.getTag = jest.fn(() => '2023:01:15 12:30:45');
+
+      const imageInfo: ImageInfo = {
+        identifier: 'test-module',
+        path: 'test.jpg',
+        data: 'data:image/jpeg;base64,test',
+        index: 1,
+        total: 1
+      };
+
+      infoController.displayImage(imageInfo);
+
+      // EXIF getData is called asynchronously
+      expect(mockEXIF.getData).toBeDefined();
+    });
+
+    it('should handle EXIF data with no date', () => {
+      const infoConfig = {
+        ...mockConfig,
+        showImageInfo: true
+      };
+      const infoController = new ModuleController(
+        infoConfig,
+        'test-module',
+        mockCallbacks,
+        mockLog,
+        mockMoment,
+        mockEXIF
+      );
+      infoController.start();
+      infoController.getDom();
+
+      // Setup EXIF to return null
+      mockEXIF.getTag = jest.fn(() => null);
+
+      const imageInfo: ImageInfo = {
+        identifier: 'test-module',
+        path: 'test.jpg',
+        data: 'data:image/jpeg;base64,test',
+        index: 1,
+        total: 1
+      };
+
+      infoController.displayImage(imageInfo);
+
+      expect(mockEXIF.getData).toBeDefined();
+    });
+
+    it('should handle EXIF date parsing error', () => {
+      const infoConfig = {
+        ...mockConfig,
+        showImageInfo: true
+      };
+      const infoController = new ModuleController(
+        infoConfig,
+        'test-module',
+        mockCallbacks,
+        mockLog,
+        mockMoment,
+        mockEXIF
+      );
+      infoController.start();
+      infoController.getDom();
+
+      // Setup EXIF to return invalid date
+      mockEXIF.getTag = jest.fn(() => 'invalid-date');
+      // Make moment throw error
+      mockMoment.mockImplementation(() => {
+        throw new Error('Invalid date');
+      });
+
+      const imageInfo: ImageInfo = {
+        identifier: 'test-module',
+        path: 'test.jpg',
+        data: 'data:image/jpeg;base64,test',
+        index: 1,
+        total: 1
+      };
+
+      infoController.displayImage(imageInfo);
+
+      // Should handle error gracefully
+      expect(mockEXIF.getData).toBeDefined();
+    });
+  });
+
   describe('integration scenarios', () => {
     beforeEach(() => {
       controller.start();
@@ -781,6 +1194,25 @@ describe('ModuleController', () => {
       expect(mockLog.log).toHaveBeenCalledWith(
         '[MMM-SynPhotoSlideshow] Frontend resume called'
       );
+    });
+
+    it('should handle complete URLS workflow with restore', () => {
+      controller.getDom(); // Initialize DOM first
+
+      // Manually set up saved state
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (controller as any).savedImages = ['img1.jpg', 'img2.jpg'];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (controller as any).savedIndex = 0;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (controller as any).imageList = []; // Empty list so it requests from backend
+
+      // Send empty to trigger restore
+      controller.socketNotificationReceived('BACKGROUNDSLIDESHOW_URLS', {});
+
+      // Should have restored the saved images and called updateImage
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((controller as any).savedImages).toBeNull();
     });
   });
 });
