@@ -53,14 +53,23 @@ describe('UIBuilder', () => {
   });
 
   describe('constructor', () => {
-    it('should initialize with config', () => {
-      expect(builder.config).toBe(mockConfig);
+    it('should create instance successfully', () => {
+      expect(builder).toBeInstanceOf(UIBuilder);
     });
 
-    it('should handle empty config', () => {
+    it('should create instance with empty config', () => {
       const emptyBuilder = new UIBuilder({} as ModuleConfig);
 
-      expect(emptyBuilder.config).toEqual({});
+      expect(emptyBuilder).toBeInstanceOf(UIBuilder);
+    });
+
+    it('should use config values in public methods', () => {
+      mockConfig.imageInfoLocation = 'topRight';
+      builder = new UIBuilder(mockConfig as ModuleConfig);
+
+      const infoDiv = builder.createImageInfoDiv(wrapper);
+
+      expect(infoDiv.className).toContain('topRight');
     });
   });
 
