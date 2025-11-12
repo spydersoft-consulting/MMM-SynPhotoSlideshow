@@ -9,9 +9,12 @@ import UIBuilder from './UIBuilder';
 import type { ImageInfo, ModuleConfig } from '../types';
 
 // Mock Log for updateImageInfo
-global.Log = {
+const Log = {
   warn: jest.fn()
 };
+
+// Attach to global for UIBuilder to access
+(globalThis as Record<string, unknown>).Log = Log;
 
 // Helper function to create mock image info
 const createMockImageInfo = (overrides: Partial<ImageInfo> = {}): ImageInfo =>
@@ -462,7 +465,7 @@ describe('UIBuilder', () => {
       mockConfig.imageInfo = ['date'];
       builder = new UIBuilder(mockConfig as ModuleConfig);
 
-      builder.updateImageInfo(imageInfoDiv, imageInfo, null, translate);
+      builder.updateImageInfo(imageInfoDiv, imageInfo, '', translate);
 
       const content = imageInfoDiv.innerHTML;
       expect(content).toContain('<header');
@@ -474,7 +477,7 @@ describe('UIBuilder', () => {
       builder = new UIBuilder(mockConfig as ModuleConfig);
       imageInfo.path = '/photos/vacation/beach.jpg';
 
-      builder.updateImageInfo(imageInfoDiv, imageInfo, null, translate);
+      builder.updateImageInfo(imageInfoDiv, imageInfo, '', translate);
 
       expect(imageInfoDiv.innerHTML).toContain('beach.jpg<br');
     });
@@ -485,7 +488,7 @@ describe('UIBuilder', () => {
       builder = new UIBuilder(mockConfig as ModuleConfig);
       imageInfo.path = '/photos/vacation/beach.jpg';
 
-      builder.updateImageInfo(imageInfoDiv, imageInfo, null, translate);
+      builder.updateImageInfo(imageInfoDiv, imageInfo, '', translate);
 
       expect(imageInfoDiv.innerHTML).toContain('beach<br');
       expect(imageInfoDiv.innerHTML).not.toContain('beach.jpg');
@@ -497,7 +500,7 @@ describe('UIBuilder', () => {
       builder = new UIBuilder(mockConfig as ModuleConfig);
       imageInfo.path = '/photos/vacation/image';
 
-      builder.updateImageInfo(imageInfoDiv, imageInfo, null, translate);
+      builder.updateImageInfo(imageInfoDiv, imageInfo, '', translate);
 
       expect(imageInfoDiv.innerHTML).toContain('image<br');
     });
@@ -508,7 +511,7 @@ describe('UIBuilder', () => {
       imageInfo.index = 5;
       imageInfo.total = 20;
 
-      builder.updateImageInfo(imageInfoDiv, imageInfo, null, translate);
+      builder.updateImageInfo(imageInfoDiv, imageInfo, '', translate);
 
       expect(imageInfoDiv.innerHTML).toContain('5 of 20<br');
     });
@@ -566,7 +569,7 @@ describe('UIBuilder', () => {
       builder = new UIBuilder(mockConfig as ModuleConfig);
       imageInfo.path = '/home/user/photos/2025/11/vacation/beach/IMG_1234.JPG';
 
-      builder.updateImageInfo(imageInfoDiv, imageInfo, null, translate);
+      builder.updateImageInfo(imageInfoDiv, imageInfo, '', translate);
 
       expect(imageInfoDiv.innerHTML).toContain('IMG_1234.JPG<br');
     });
@@ -577,7 +580,7 @@ describe('UIBuilder', () => {
       builder = new UIBuilder(mockConfig as ModuleConfig);
       imageInfo.path = '/photos/archive.tar.gz';
 
-      builder.updateImageInfo(imageInfoDiv, imageInfo, null, translate);
+      builder.updateImageInfo(imageInfoDiv, imageInfo, '', translate);
 
       expect(imageInfoDiv.innerHTML).toContain('archive.tar<br');
     });

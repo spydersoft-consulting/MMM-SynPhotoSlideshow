@@ -23,11 +23,11 @@ declare const Module: {
   register: (name: string, definition: unknown) => void;
 };
 declare const Log: {
-  info: (message: string) => void;
-  log: (message: string) => void;
-  debug: (message: string) => void;
-  warn: (message: string) => void;
-  error: (message: string) => void;
+  info: (message: string, ...args: unknown[]) => void;
+  log: (message: string, ...args: unknown[]) => void;
+  debug: (message: string, ...args: unknown[]) => void;
+  warn: (message: string, ...args: unknown[]) => void;
+  error: (message: string, ...args: unknown[]) => void;
 };
 declare const moment: (
   date: string,
@@ -213,10 +213,7 @@ const moduleDefinition: Partial<ModuleInstance> = {
     this.imageList = urls.splice(0);
     this.imageIndex = 0;
     this.updateImage();
-    if (
-      !this.playingVideo &&
-      (this.timer || (this.savedImages && this.savedImages.length === 0))
-    ) {
+    if (!this.playingVideo && (this.timer || this.savedImages?.length === 0)) {
       // Restart timer only if timer was already running
       this.resume();
     }
@@ -302,7 +299,7 @@ const moduleDefinition: Partial<ModuleInstance> = {
       this.sendSocketNotification('BACKGROUNDSLIDESHOW_PAUSE');
     } else if (notification === 'BACKGROUNDSLIDESHOW_URL') {
       const typedPayload = payload as { url?: string; resume?: boolean };
-      if (typedPayload && typedPayload.url) {
+      if (typedPayload?.url) {
         if (typedPayload.resume) {
           if (this.timer) {
             this.resume();
@@ -317,7 +314,7 @@ const moduleDefinition: Partial<ModuleInstance> = {
         `[MMM-SynPhotoSlideshow] Notification Received: BACKGROUNDSLIDESHOW_URLS. Payload: ${JSON.stringify(payload)}`
       );
       const typedPayload = payload as { urls?: string[] };
-      if (typedPayload && typedPayload.urls && typedPayload.urls.length) {
+      if (typedPayload?.urls?.length) {
         if (this.savedImages) {
           const temp = [...new Set([...typedPayload.urls, ...this.imageList])];
           if (temp.length !== typedPayload.urls.length) {

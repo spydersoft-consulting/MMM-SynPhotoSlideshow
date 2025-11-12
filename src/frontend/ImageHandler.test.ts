@@ -1,520 +1,521 @@
 /**
  * ImageHandler.test.ts
  *
- * Unit tests for ImageHandler
+ * Unit tests for ImageHandler - Public API only
+ * @jest-environment jsdom
  */
 
-// FIXME: Source map issue preventing test from running
-// Skipping this test suite for now
-describe.skip('ImageHandler (Skipped - Source Map Issue)', () => {
-  it('skipped', () => {
-    expect(true).toBe(true);
-  });
-});
-
-/* Commented out until source map issue is resolved
 import ImageHandler from './ImageHandler';
-import type { ModuleConfig, ImageInfo } from '../types';
+import type { ModuleConfig } from '../types';
 
-// Mock browser globals
-global.CSS = {
-	supports: jest.fn()
-} as unknown as typeof CSS;
-
-global.window = {
-	innerWidth: 1920,
-	innerHeight: 1080
-} as unknown as Window & typeof globalThis;
-
-global.document = {
-	createElement: jest.fn()
-} as unknown as Document;
-
-// @ts-expect-error - Adding EXIF to global for testing
-global.EXIF = {
-	getData: jest.fn(),
-	getTag: jest.fn()
+// Mock global CSS
+(globalThis as Record<string, unknown>).CSS = {
+  supports: jest.fn()
 };
 
-global.Math.random = jest.fn();
-
-// Mock console methods
-global.console = {
-	...console,
-	debug: jest.fn(),
-	log: jest.fn()
-} as Console;
+// Mock global EXIF
+const EXIF = {
+  getData: jest.fn(),
+  getTag: jest.fn()
+};
+(globalThis as Record<string, unknown>).EXIF = EXIF;
 
 describe('ImageHandler', () => {
-	let imageHandler: ImageHandler;
-	let mockConfig: ModuleConfig;
-	let mockDiv: {
-		style: Record<string, unknown>;
-		className: string;
-		classList: { add: jest.Mock };
-	};
-
-	beforeEach(() => {
-		jest.clearAllMocks();
-
-		// Default config
-		mockConfig = {
-			sortImagesBy: 'random',
-			imageInfo: ['name'],
-			slideshowSpeed: 5000,
-			transitionImages: true,
-			backgroundSize: 'cover',
-			backgroundPosition: 'center',
-			fitPortraitImages: true,
-			backgroundAnimationEnabled: true,
-			animations: ['fade', 'slide', 'zoom'],
-			backgroundAnimationDuration: '3s',
-			transitionSpeed: '1s',
-			backgroundAnimationLoopCount: 1
-		} as ModuleConfig;
-
-		// Mock div element
-		mockDiv = {
-			style: {},
-			className: '',
-			classList: {
-				add: jest.fn()
-			}
-		};
-
-		(global.document.createElement as jest.Mock).mockReturnValue(mockDiv);
-		(global.CSS.supports as jest.Mock).mockReturnValue(true);
-		(global.Math.random as jest.Mock).mockReturnValue(0.5);
-	});
-
-	describe('constructor', () => {
-		it('should initialize with config', () => {
-			imageHandler = new ImageHandler(mockConfig);
-
-			expect(imageHandler.config).toBe(mockConfig);
-		});
-
-		it('should check for native EXIF orientation support', () => {
-			(global.CSS.supports as jest.Mock).mockReturnValue(true);
-
-			imageHandler = new ImageHandler(mockConfig);
-
-			expect(global.CSS.supports).toHaveBeenCalledWith('image-orientation: from-image');
-			expect(imageHandler.browserSupportsExifOrientationNatively).toBe(true);
-		});
-
-		it('should handle browsers without native EXIF support', () => {
-			(global.CSS.supports as jest.Mock).mockReturnValue(false);
-
-			imageHandler = new ImageHandler(mockConfig);
-
-			expect(imageHandler.browserSupportsExifOrientationNatively).toBe(false);
-		});
-	});
-
-	describe('createImageDiv', () => {
-		beforeEach(() => {
-			imageHandler = new ImageHandler(mockConfig);
-		});
-
-		it('should create a div element', () => {
-			const div = imageHandler.createImageDiv();
-
-			expect(global.document.createElement).toHaveBeenCalledWith('div');
-			expect(div).toBe(mockDiv);
-		});
-
-		it('should apply backgroundSize from config', () => {
-			mockConfig.backgroundSize = 'contain';
+  let handler: ImageHandler;
+  let mockConfig: Partial<ModuleConfig>;
 
-			const div = imageHandler.createImageDiv();
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    mockConfig = {
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      fitPortraitImages: true,
+      backgroundAnimationEnabled: true,
+      animations: ['fade', 'zoom'],
+      backgroundAnimationDuration: '3s',
+      transitionSpeed: '1s',
+      backgroundAnimationLoopCount: '1'
+    };
+
+    (CSS.supports as jest.Mock).mockReturnValue(true);
+  });
+
+  describe('constructor', () => {
+    it('should create instance successfully', () => {
+      handler = new ImageHandler(mockConfig as ModuleConfig);
+
+      expect(handler).toBeInstanceOf(ImageHandler);
+    });
+
+    it('should check for native EXIF orientation support', () => {
+      handler = new ImageHandler(mockConfig as ModuleConfig);
+
+      expect(CSS.supports).toHaveBeenCalledWith(
+        'image-orientation: from-image'
+      );
+    });
+
+    it('should handle browsers without EXIF support', () => {
+      (CSS.supports as jest.Mock).mockReturnValue(false);
+
+      handler = new ImageHandler(mockConfig as ModuleConfig);
 
-			expect(div.style.backgroundSize).toBe('contain');
-		});
+      expect(handler).toBeInstanceOf(ImageHandler);
+    });
+  });
 
-		it('should apply backgroundPosition from config', () => {
-			mockConfig.backgroundPosition = 'top left';
+  describe('createImageDiv', () => {
+    beforeEach(() => {
+      handler = new ImageHandler(mockConfig as ModuleConfig);
+    });
 
-			const div = imageHandler.createImageDiv();
+    it('should create a div element', () => {
+      const div = handler.createImageDiv();
 
-			expect(div.style.backgroundPosition).toBe('top left');
-		});
+      expect(div).toBeInstanceOf(HTMLDivElement);
+      expect(div.tagName).toBe('DIV');
+    });
 
-		it('should set className to "image"', () => {
-			const div = imageHandler.createImageDiv();
+    it('should apply backgroundSize from config', () => {
+      mockConfig.backgroundSize = 'contain';
+      handler = new ImageHandler(mockConfig as ModuleConfig);
 
-			expect(div.className).toBe('image');
-		});
-	});
+      const div = handler.createImageDiv();
 
-	describe('applyFitMode', () => {
-		beforeEach(() => {
-			imageHandler = new ImageHandler(mockConfig);
-		});
+      expect(div.style.backgroundSize).toBe('contain');
+    });
 
-		it('should return false if fitPortraitImages is disabled', () => {
-			mockConfig.fitPortraitImages = false;
-			const mockImage = { width: 800, height: 1200 } as ImageInfo;
+    it('should apply backgroundPosition from config', () => {
+      mockConfig.backgroundPosition = 'center center';
+      handler = new ImageHandler(mockConfig as ModuleConfig);
 
-			const result = imageHandler.applyFitMode(mockDiv as unknown as HTMLElement, mockImage);
+      const div = handler.createImageDiv();
 
-			expect(result).toBe(false);
-			expect(mockDiv.classList.add).not.toHaveBeenCalled();
-		});
+      // jsdom may normalize the style value
+      expect(div.style.backgroundPosition).toBeTruthy();
+    });
 
-		it('should add portrait-mode class for portrait images on landscape screen', () => {
-			(global.window as { innerWidth: number; innerHeight: number }).innerWidth = 1920;
-			(global.window as { innerWidth: number; innerHeight: number }).innerHeight = 1080;
-			const mockImage = { width: 800, height: 1200 } as ImageInfo;
+    it('should set className to "image"', () => {
+      const div = handler.createImageDiv();
 
-			const result = imageHandler.applyFitMode(mockDiv as unknown as HTMLElement, mockImage);
+      expect(div.className).toBe('image');
+    });
 
-			expect(result).toBe(true);
-			expect(mockDiv.classList.add).toHaveBeenCalledWith('portrait-mode');
-			expect(console.debug).toHaveBeenCalled();
-		});
+    it('should handle different background sizes', () => {
+      const sizes = ['cover', 'contain', '100% 100%', 'auto'];
 
-		it('should add landscape-mode class for landscape images', () => {
-			(global.window as { innerWidth: number; innerHeight: number }).innerWidth = 1920;
-			(global.window as { innerWidth: number; innerHeight: number }).innerHeight = 1080;
-			const mockImage = { width: 1600, height: 900 } as ImageInfo;
+      sizes.forEach((size) => {
+        mockConfig.backgroundSize = size;
+        handler = new ImageHandler(mockConfig as ModuleConfig);
+        const div = handler.createImageDiv();
 
-			const result = imageHandler.applyFitMode(mockDiv as unknown as HTMLElement, mockImage);
+        expect(div.style.backgroundSize).toBe(size);
+      });
+    });
+  });
 
-			expect(result).toBe(true);
-			expect(mockDiv.classList.add).toHaveBeenCalledWith('landscape-mode');
-			expect(console.debug).toHaveBeenCalled();
-		});
+  describe('applyFitMode', () => {
+    let div: HTMLDivElement;
 
-		it('should return false for portrait images on portrait screen', () => {
-			(global.window as { innerWidth: number; innerHeight: number }).innerWidth = 1080;
-			(global.window as { innerWidth: number; innerHeight: number }).innerHeight = 1920;
-			const mockImage = { width: 800, height: 1200 } as ImageInfo;
+    beforeEach(() => {
+      handler = new ImageHandler(mockConfig as ModuleConfig);
+      div = document.createElement('div');
+      // Mock window dimensions (landscape screen)
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 1920
+      });
+      Object.defineProperty(window, 'innerHeight', {
+        writable: true,
+        configurable: true,
+        value: 1080
+      });
+    });
 
-			const result = imageHandler.applyFitMode(mockDiv as unknown as HTMLElement, mockImage);
+    it('should return false when fitPortraitImages is disabled', () => {
+      mockConfig.fitPortraitImages = false;
+      handler = new ImageHandler(mockConfig as ModuleConfig);
 
-			expect(result).toBe(false);
-			expect(mockDiv.classList.add).not.toHaveBeenCalled();
-		});
+      const mockImage = { width: 800, height: 1200 } as HTMLImageElement;
+      const result = handler.applyFitMode(div, mockImage);
 
-		it('should handle square images as landscape', () => {
-			(global.window as { innerWidth: number; innerHeight: number }).innerWidth = 1920;
-			(global.window as { innerWidth: number; innerHeight: number }).innerHeight = 1080;
-			const mockImage = { width: 1000, height: 1000 } as ImageInfo;
+      expect(result).toBe(false);
+      expect(div.classList.contains('portrait-mode')).toBe(false);
+    });
 
-			const result = imageHandler.applyFitMode(mockDiv as unknown as HTMLElement, mockImage);
+    it('should add portrait-mode class for portrait images on landscape screen', () => {
+      const mockImage = { width: 800, height: 1200 } as HTMLImageElement;
 
-			expect(result).toBe(true);
-			expect(mockDiv.classList.add).toHaveBeenCalledWith('landscape-mode');
-		});
-	});
+      const result = handler.applyFitMode(div, mockImage);
 
-	describe('applyAnimation', () => {
-		beforeEach(() => {
-			imageHandler = new ImageHandler(mockConfig);
-		});
+      expect(result).toBe(true);
+      expect(div.classList.contains('portrait-mode')).toBe(true);
+    });
 
-		it('should do nothing if animations are disabled', () => {
-			mockConfig.backgroundAnimationEnabled = false;
+    it('should return false for landscape images', () => {
+      const mockImage = { width: 1920, height: 1080 } as HTMLImageElement;
 
-			imageHandler.applyAnimation(mockDiv as unknown as HTMLElement, { width: 1920, height: 1080 } as ImageInfo);
+      const result = handler.applyFitMode(div, mockImage);
 
-			expect(mockDiv.style.animationDuration).toBeUndefined();
-		});
+      expect(result).toBe(false);
+      expect(div.classList.contains('portrait-mode')).toBe(false);
+    });
 
-		it('should do nothing if animations array is empty', () => {
-			mockConfig.animations = [];
+    it('should return false for portrait image on portrait screen', () => {
+      Object.defineProperty(window, 'innerWidth', { value: 1080 });
+      Object.defineProperty(window, 'innerHeight', { value: 1920 });
 
-			imageHandler.applyAnimation(mockDiv as unknown as HTMLElement, { width: 1920, height: 1080 } as ImageInfo);
+      const mockImage = { width: 800, height: 1200 } as HTMLImageElement;
+      const result = handler.applyFitMode(div, mockImage);
 
-			expect(mockDiv.style.animationDuration).toBeUndefined();
-		});
+      expect(result).toBe(false);
+      expect(div.classList.contains('portrait-mode')).toBe(false);
+    });
 
-		it('should set animation duration from config', () => {
-			mockConfig.backgroundAnimationDuration = '5s';
-			(global.Math.random as jest.Mock).mockReturnValue(0);
+    it('should handle square images as landscape', () => {
+      const mockImage = { width: 1000, height: 1000 } as HTMLImageElement;
 
-			imageHandler.applyAnimation(mockDiv as unknown as HTMLElement, { width: 1920, height: 1080 } as ImageInfo);
+      const result = handler.applyFitMode(div, mockImage);
 
-			expect(mockDiv.style.animationDuration).toBe('5s');
-		});
+      expect(result).toBe(false);
+    });
 
-		it('should set animation delay from transitionSpeed', () => {
-			mockConfig.transitionSpeed = '2s';
-			(global.Math.random as jest.Mock).mockReturnValue(0);
+    it('should handle very tall portrait images', () => {
+      const mockImage = { width: 600, height: 2400 } as HTMLImageElement;
 
-			imageHandler.applyAnimation(mockDiv as unknown as HTMLElement, { width: 1920, height: 1080 } as ImageInfo);
+      const result = handler.applyFitMode(div, mockImage);
 
-			expect(mockDiv.style.animationDelay).toBe('2s');
-		});
+      expect(result).toBe(true);
+      expect(div.classList.contains('portrait-mode')).toBe(true);
+    });
+  });
 
-		it('should apply non-slide animation class', () => {
-			mockConfig.animations = ['fade', 'zoom'];
-			(global.Math.random as jest.Mock).mockReturnValue(0);
-			mockDiv.className = 'image';
+  describe('applyAnimation', () => {
+    let div: HTMLDivElement;
 
-			imageHandler.applyAnimation(mockDiv as unknown as HTMLElement, { width: 1920, height: 1080 } as ImageInfo);
+    beforeEach(() => {
+      handler = new ImageHandler(mockConfig as ModuleConfig);
+      div = document.createElement('div');
+      div.className = 'image';
+      Object.defineProperty(window, 'innerWidth', { value: 1920 });
+      Object.defineProperty(window, 'innerHeight', { value: 1080 });
+    });
 
-			expect(mockDiv.className).toBe('image fade');
-		});
+    it('should do nothing when animations are disabled', () => {
+      mockConfig.backgroundAnimationEnabled = false;
+      handler = new ImageHandler(mockConfig as ModuleConfig);
 
-		it('should call applySlideAnimation for slide animation', () => {
-			mockConfig.animations = ['slide'];
-			(global.Math.random as jest.Mock).mockReturnValue(0);
-			const mockImage = { width: 1920, height: 1080 } as ImageInfo;
-			const spy = jest.spyOn(imageHandler, 'applySlideAnimation');
+      const mockImage = { width: 1920, height: 1080 } as HTMLImageElement;
+      handler.applyAnimation(div, mockImage);
 
-			imageHandler.applyAnimation(mockDiv as unknown as HTMLElement, mockImage);
+      expect(div.style.animationDuration).toBe('');
+    });
 
-			expect(spy).toHaveBeenCalledWith(mockDiv, mockImage);
-		});
+    it('should do nothing when animations array is empty', () => {
+      mockConfig.animations = [];
+      handler = new ImageHandler(mockConfig as ModuleConfig);
 
-		it('should randomly select animation from array', () => {
-			mockConfig.animations = ['fade', 'zoom', 'blur'];
-			(global.Math.random as jest.Mock).mockReturnValue(0.9);
-			mockDiv.className = 'image';
+      const mockImage = { width: 1920, height: 1080 } as HTMLImageElement;
+      handler.applyAnimation(div, mockImage);
 
-			imageHandler.applyAnimation(mockDiv as unknown as HTMLElement, { width: 1920, height: 1080 } as ImageInfo);
+      expect(div.style.animationDuration).toBe('');
+    });
 
-			expect(mockDiv.className).toBe('image blur');
-		});
-	});
+    it('should set animation duration from config', () => {
+      mockConfig.backgroundAnimationDuration = '5s';
+      handler = new ImageHandler(mockConfig as ModuleConfig);
 
-	describe('applySlideAnimation', () => {
-		beforeEach(() => {
-			imageHandler = new ImageHandler(mockConfig);
-			(global.window as { innerWidth: number; innerHeight: number }).innerWidth = 1920;
-			(global.window as { innerWidth: number; innerHeight: number }).innerHeight = 1080;
-		});
+      const mockImage = { width: 1920, height: 1080 } as HTMLImageElement;
+      handler.applyAnimation(div, mockImage);
 
-		it('should set backgroundPosition to empty string', () => {
-			const mockImage = { width: 3840, height: 2160 } as ImageInfo;
+      expect(div.style.animationDuration).toBe('5s');
+    });
 
-			imageHandler.applySlideAnimation(mockDiv as unknown as HTMLElement, mockImage);
+    it('should set animation delay from transitionSpeed', () => {
+      mockConfig.transitionSpeed = '2s';
+      handler = new ImageHandler(mockConfig as ModuleConfig);
 
-			expect(mockDiv.style.backgroundPosition).toBe('');
-		});
+      const mockImage = { width: 1920, height: 1080 } as HTMLImageElement;
+      handler.applyAnimation(div, mockImage);
 
-		it('should set animationIterationCount from config', () => {
-			mockConfig.backgroundAnimationLoopCount = 3;
-			const mockImage = { width: 1920, height: 1080 } as ImageInfo;
+      expect(div.style.animationDelay).toBe('2s');
+    });
 
-			imageHandler.applySlideAnimation(mockDiv as unknown as HTMLElement, mockImage);
+    it('should apply animation class to div', () => {
+      mockConfig.animations = ['fade'];
+      handler = new ImageHandler(mockConfig as ModuleConfig);
 
-			expect(mockDiv.style.animationIterationCount).toBe(3);
-		});
+      const mockImage = { width: 1920, height: 1080 } as HTMLImageElement;
+      handler.applyAnimation(div, mockImage);
 
-		it('should set backgroundSize to cover', () => {
-			const mockImage = { width: 1920, height: 1080 } as ImageInfo;
+      expect(div.className).toContain('fade');
+    });
 
-			imageHandler.applySlideAnimation(mockDiv as unknown as HTMLElement, mockImage);
+    it('should handle slide animation', () => {
+      mockConfig.animations = ['slide'];
+      handler = new ImageHandler(mockConfig as ModuleConfig);
 
-			expect(mockDiv.style.backgroundSize).toBe('cover');
-		});
+      const mockImage = { width: 3840, height: 2160 } as HTMLImageElement;
+      handler.applyAnimation(div, mockImage);
 
-		it('should add horizontal slide class for wide images', () => {
-			const mockImage = { width: 3840, height: 1080 } as ImageInfo;
-			mockDiv.className = 'image';
-			(global.Math.random as jest.Mock).mockReturnValue(0.6);
+      // Should have animation properties set
+      expect(div.style.animationDuration).toBe('3s');
+      expect(div.style.animationDelay).toBe('1s');
+      // Should have slide class added (either slideH, slideHInv, slideV, or slideVInv)
+      expect(div.className.includes('slide')).toBe(true);
+    });
 
-			imageHandler.applySlideAnimation(mockDiv as unknown as HTMLElement, mockImage);
+    it('should randomly select from multiple animations', () => {
+      mockConfig.animations = ['fade', 'zoom', 'blur'];
+      handler = new ImageHandler(mockConfig as ModuleConfig);
 
-			expect(mockDiv.className).toBe('image slideH');
-		});
+      const mockImage = { width: 1920, height: 1080 } as HTMLImageElement;
+      handler.applyAnimation(div, mockImage);
 
-		it('should add horizontal inverse slide class for wide images', () => {
-			const mockImage = { width: 3840, height: 1080 } as ImageInfo;
-			mockDiv.className = 'image';
-			(global.Math.random as jest.Mock).mockReturnValue(0.4);
+      // Should have one of the animation classes
+      const hasAnimation =
+        div.className.includes('fade') ||
+        div.className.includes('zoom') ||
+        div.className.includes('blur');
+      expect(hasAnimation).toBe(true);
+    });
+  });
 
-			imageHandler.applySlideAnimation(mockDiv as unknown as HTMLElement, mockImage);
+  describe('getImageTransformCss', () => {
+    beforeEach(() => {
+      handler = new ImageHandler(mockConfig as ModuleConfig);
+    });
 
-			expect(mockDiv.className).toBe('image slideHInv');
-		});
+    it('should return no rotation for orientation 1', () => {
+      const result = handler.getImageTransformCss(1);
 
-		it('should add vertical slide class for tall images', () => {
-			const mockImage = { width: 1920, height: 3240 } as ImageInfo;
-			mockDiv.className = 'image';
-			(global.Math.random as jest.Mock).mockReturnValue(0.6);
+      expect(result).toBe('rotate(0deg)');
+    });
 
-			imageHandler.applySlideAnimation(mockDiv as unknown as HTMLElement, mockImage);
+    it('should return horizontal flip for orientation 2', () => {
+      const result = handler.getImageTransformCss(2);
 
-			expect(mockDiv.className).toBe('image slideV');
-		});
+      expect(result).toBe('scaleX(-1)');
+    });
 
-		it('should add vertical inverse slide class for tall images', () => {
-			const mockImage = { width: 1920, height: 3240 } as ImageInfo;
-			mockDiv.className = 'image';
-			(global.Math.random as jest.Mock).mockReturnValue(0.4);
+    it('should return 180 degree rotation for orientation 3', () => {
+      const result = handler.getImageTransformCss(3);
 
-			imageHandler.applySlideAnimation(mockDiv as unknown as HTMLElement, mockImage);
+      expect(result).toBe('scaleX(-1) scaleY(-1)');
+    });
 
-			expect(mockDiv.className).toBe('image slideVInv');
-		});
-	});
+    it('should return vertical flip for orientation 4', () => {
+      const result = handler.getImageTransformCss(4);
 
-	describe('getImageTransformCss', () => {
-		beforeEach(() => {
-			imageHandler = new ImageHandler(mockConfig);
-		});
+      expect(result).toBe('scaleY(-1)');
+    });
 
-		it('should return no rotation for orientation 1', () => {
-			const result = imageHandler.getImageTransformCss(1);
+    it('should return flipped 90 degree rotation for orientation 5', () => {
+      const result = handler.getImageTransformCss(5);
 
-			expect(result).toBe('rotate(0deg)');
-		});
+      expect(result).toBe('scaleX(-1) rotate(90deg)');
+    });
 
-		it('should return horizontal flip for orientation 2', () => {
-			const result = imageHandler.getImageTransformCss(2);
+    it('should return 90 degree rotation for orientation 6', () => {
+      const result = handler.getImageTransformCss(6);
 
-			expect(result).toBe('scaleX(-1)');
-		});
+      expect(result).toBe('rotate(90deg)');
+    });
 
-		it('should return 180 degree rotation for orientation 3', () => {
-			const result = imageHandler.getImageTransformCss(3);
+    it('should return flipped -90 degree rotation for orientation 7', () => {
+      const result = handler.getImageTransformCss(7);
 
-			expect(result).toBe('scaleX(-1) scaleY(-1)');
-		});
+      expect(result).toBe('scaleX(-1) rotate(-90deg)');
+    });
 
-		it('should return vertical flip for orientation 4', () => {
-			const result = imageHandler.getImageTransformCss(4);
+    it('should return -90 degree rotation for orientation 8', () => {
+      const result = handler.getImageTransformCss(8);
 
-			expect(result).toBe('scaleY(-1)');
-		});
+      expect(result).toBe('rotate(-90deg)');
+    });
 
-		it('should return flipped 90 degree rotation for orientation 5', () => {
-			const result = imageHandler.getImageTransformCss(5);
+    it('should return default rotation for invalid orientation', () => {
+      const result = handler.getImageTransformCss(99);
 
-			expect(result).toBe('scaleX(-1) rotate(90deg)');
-		});
+      expect(result).toBe('rotate(0deg)');
+    });
 
-		it('should return 90 degree rotation for orientation 6', () => {
-			const result = imageHandler.getImageTransformCss(6);
+    it('should handle all 8 EXIF orientations', () => {
+      const orientations = [1, 2, 3, 4, 5, 6, 7, 8];
 
-			expect(result).toBe('rotate(90deg)');
-		});
+      orientations.forEach((orientation) => {
+        const result = handler.getImageTransformCss(orientation);
+        expect(result).toBeTruthy();
+        expect(typeof result).toBe('string');
+      });
+    });
+  });
 
-		it('should return flipped -90 degree rotation for orientation 7', () => {
-			const result = imageHandler.getImageTransformCss(7);
+  describe('applyExifOrientation', () => {
+    let div: HTMLDivElement;
+    let mockImage: HTMLImageElement;
 
-			expect(result).toBe('scaleX(-1) rotate(-90deg)');
-		});
+    beforeEach(() => {
+      div = document.createElement('div');
+      mockImage = new Image();
+    });
 
-		it('should return -90 degree rotation for orientation 8', () => {
-			const result = imageHandler.getImageTransformCss(8);
+    it('should do nothing when browser supports native EXIF orientation', () => {
+      (CSS.supports as jest.Mock).mockReturnValue(true);
+      handler = new ImageHandler(mockConfig as ModuleConfig);
 
-			expect(result).toBe('rotate(-90deg)');
-		});
+      handler.applyExifOrientation(div, mockImage);
 
-		it('should return default rotation for undefined orientation', () => {
-			const result = imageHandler.getImageTransformCss(undefined);
+      expect(EXIF.getData).not.toHaveBeenCalled();
+    });
 
-			expect(result).toBe('rotate(0deg)');
-		});
+    it('should use EXIF library when browser lacks native support', () => {
+      (CSS.supports as jest.Mock).mockReturnValue(false);
+      handler = new ImageHandler(mockConfig as ModuleConfig);
 
-		it('should return default rotation for invalid orientation', () => {
-			const result = imageHandler.getImageTransformCss(99);
+      handler.applyExifOrientation(div, mockImage);
 
-			expect(result).toBe('rotate(0deg)');
-		});
-	});
+      expect(EXIF.getData).toHaveBeenCalledWith(
+        mockImage,
+        expect.any(Function)
+      );
+    });
 
-	describe('applyExifOrientation', () => {
-		beforeEach(() => {
-			imageHandler = new ImageHandler(mockConfig);
-		});
+    it('should apply correct transform for EXIF orientation 6', () => {
+      (CSS.supports as jest.Mock).mockReturnValue(false);
+      handler = new ImageHandler(mockConfig as ModuleConfig);
 
-		it('should do nothing if browser supports native EXIF orientation', () => {
-			(global.CSS.supports as jest.Mock).mockReturnValue(true);
-			imageHandler.browserSupportsExifOrientationNatively = true;
-			const mockImage = {} as HTMLImageElement;
+      (EXIF.getData as jest.Mock).mockImplementation(
+        (img: HTMLImageElement, callback: () => void) => {
+          callback();
+        }
+      );
+      (EXIF.getTag as jest.Mock).mockReturnValue(6);
 
-			imageHandler.applyExifOrientation(mockDiv as unknown as HTMLElement, mockImage);
+      handler.applyExifOrientation(div, mockImage);
 
-			expect(global.EXIF.getData).not.toHaveBeenCalled();
-		});
+      expect(EXIF.getTag).toHaveBeenCalledWith(mockImage, 'Orientation');
+      expect(div.style.transform).toBe('rotate(90deg)');
+    });
 
-		it('should apply EXIF transform if browser does not support native orientation', () => {
-			imageHandler.browserSupportsExifOrientationNatively = false;
-			const mockImage = {} as HTMLImageElement;
-			let dataCallback: (() => void) | undefined;
+    it('should apply correct transform for EXIF orientation 3', () => {
+      (CSS.supports as jest.Mock).mockReturnValue(false);
+      handler = new ImageHandler(mockConfig as ModuleConfig);
 
-			(global.EXIF.getData as jest.Mock).mockImplementation((img: unknown, callback: () => void) => {
-				dataCallback = callback;
-			});
-			(global.EXIF.getTag as jest.Mock).mockReturnValue(6);
+      (EXIF.getData as jest.Mock).mockImplementation(
+        (img: HTMLImageElement, callback: () => void) => {
+          callback();
+        }
+      );
+      (EXIF.getTag as jest.Mock).mockReturnValue(3);
 
-			imageHandler.applyExifOrientation(mockDiv as unknown as HTMLElement, mockImage);
+      handler.applyExifOrientation(div, mockImage);
 
-			expect(global.EXIF.getData).toHaveBeenCalledWith(mockImage, expect.any(Function));
+      expect(div.style.transform).toBe('scaleX(-1) scaleY(-1)');
+    });
 
-			dataCallback?.();
+    it('should handle callback from EXIF.getData', () => {
+      (CSS.supports as jest.Mock).mockReturnValue(false);
+      handler = new ImageHandler(mockConfig as ModuleConfig);
 
-			expect(global.EXIF.getTag).toHaveBeenCalledWith(mockImage, 'Orientation');
-			expect(mockDiv.style.transform).toBe('rotate(90deg)');
-		});
+      let callbackFn: (() => void) | undefined;
+      (EXIF.getData as jest.Mock).mockImplementation(
+        (img: HTMLImageElement, callback: () => void) => {
+          callbackFn = callback;
+        }
+      );
+      (EXIF.getTag as jest.Mock).mockReturnValue(8);
 
-		it('should handle EXIF orientation 3 (180 degree)', () => {
-			imageHandler.browserSupportsExifOrientationNatively = false;
-			const mockImage = {} as HTMLImageElement;
-			let dataCallback: (() => void) | undefined;
+      handler.applyExifOrientation(div, mockImage);
 
-			(global.EXIF.getData as jest.Mock).mockImplementation((img: unknown, callback: () => void) => {
-				dataCallback = callback;
-			});
-			(global.EXIF.getTag as jest.Mock).mockReturnValue(3);
+      expect(callbackFn).toBeDefined();
+      callbackFn!();
 
-			imageHandler.applyExifOrientation(mockDiv as unknown as HTMLElement, mockImage);
-			dataCallback?.();
+      expect(div.style.transform).toBe('rotate(-90deg)');
+    });
+  });
 
-			expect(mockDiv.style.transform).toBe('scaleX(-1) scaleY(-1)');
-		});
+  describe('integration scenarios', () => {
+    beforeEach(() => {
+      handler = new ImageHandler(mockConfig as ModuleConfig);
+      Object.defineProperty(window, 'innerWidth', { value: 1920 });
+      Object.defineProperty(window, 'innerHeight', { value: 1080 });
+    });
 
-		it('should handle EXIF orientation 8 (-90 degree)', () => {
-			imageHandler.browserSupportsExifOrientationNatively = false;
-			const mockImage = {} as HTMLImageElement;
-			let dataCallback: (() => void) | undefined;
+    it('should handle complete workflow for portrait image', () => {
+      const div = handler.createImageDiv();
+      expect(div.className).toBe('image');
 
-			(global.EXIF.getData as jest.Mock).mockImplementation((img: unknown, callback: () => void) => {
-				dataCallback = callback;
-			});
-			(global.EXIF.getTag as jest.Mock).mockReturnValue(8);
+      const mockImage = { width: 800, height: 1200 } as HTMLImageElement;
 
-			imageHandler.applyExifOrientation(mockDiv as unknown as HTMLElement, mockImage);
-			dataCallback?.();
+      const fitApplied = handler.applyFitMode(div, mockImage);
+      expect(fitApplied).toBe(true);
 
-			expect(mockDiv.style.transform).toBe('rotate(-90deg)');
-		});
-	});
+      handler.applyAnimation(div, mockImage);
+      expect(div.style.animationDuration).toBe('3s');
+    });
 
-	describe('integration scenarios', () => {
-		beforeEach(() => {
-			imageHandler = new ImageHandler(mockConfig);
-		});
+    it('should handle complete workflow for landscape image', () => {
+      const div = handler.createImageDiv();
+      const mockImage = { width: 1920, height: 1080 } as HTMLImageElement;
 
-		it('should handle complete image setup workflow', () => {
-			const div = imageHandler.createImageDiv();
-			expect(div.className).toBe('image');
+      handler.applyFitMode(div, mockImage);
+      handler.applyAnimation(div, mockImage);
 
-			const mockImage = { width: 800, height: 1200 } as ImageInfo;
-			const fitApplied = imageHandler.applyFitMode(div as unknown as HTMLElement, mockImage);
-			expect(fitApplied).toBe(true);
+      expect(div.style.animationDuration).toBe('3s');
+      expect(div.style.animationDelay).toBe('1s');
+    });
 
-			(global.Math.random as jest.Mock).mockReturnValue(0);
-			imageHandler.applyAnimation(div as unknown as HTMLElement, mockImage);
-			expect(div.style.animationDuration).toBe('3s');
-		});
+    it('should handle workflow without animations', () => {
+      mockConfig.backgroundAnimationEnabled = false;
+      handler = new ImageHandler(mockConfig as ModuleConfig);
 
-		it('should handle landscape image workflow', () => {
-			const div = imageHandler.createImageDiv();
-			const mockImage = { width: 1920, height: 1080 } as ImageInfo;
+      const div = handler.createImageDiv();
+      const mockImage = { width: 1920, height: 1080 } as HTMLImageElement;
 
-			imageHandler.applyFitMode(div as unknown as HTMLElement, mockImage);
-			expect(mockDiv.classList.add).toHaveBeenCalledWith('landscape-mode');
+      handler.applyFitMode(div, mockImage);
+      handler.applyAnimation(div, mockImage);
 
-			imageHandler.applyAnimation(div as unknown as HTMLElement, mockImage);
-			expect(div.style.animationDuration).toBeDefined();
-		});
-	});
+      expect(div.style.animationDuration).toBe('');
+    });
+
+    it('should handle EXIF orientation workflow', () => {
+      (CSS.supports as jest.Mock).mockReturnValue(false);
+      handler = new ImageHandler(mockConfig as ModuleConfig);
+
+      const div = handler.createImageDiv();
+      const mockImage = new Image();
+
+      (EXIF.getData as jest.Mock).mockImplementation(
+        (img: HTMLImageElement, callback: () => void) => {
+          callback();
+        }
+      );
+      (EXIF.getTag as jest.Mock).mockReturnValue(6);
+
+      handler.applyExifOrientation(div, mockImage);
+
+      expect(div.style.transform).toBe('rotate(90deg)');
+    });
+
+    it('should create and configure multiple images independently', () => {
+      const div1 = handler.createImageDiv();
+      const div2 = handler.createImageDiv();
+
+      expect(div1).not.toBe(div2);
+      expect(div1.className).toBe('image');
+      expect(div2.className).toBe('image');
+
+      const image1 = { width: 800, height: 1200 } as HTMLImageElement;
+      const image2 = { width: 1920, height: 1080 } as HTMLImageElement;
+
+      handler.applyFitMode(div1, image1);
+      handler.applyFitMode(div2, image2);
+
+      expect(div1.classList.contains('portrait-mode')).toBe(true);
+      expect(div2.classList.contains('portrait-mode')).toBe(false);
+    });
+  });
 });
-*/
