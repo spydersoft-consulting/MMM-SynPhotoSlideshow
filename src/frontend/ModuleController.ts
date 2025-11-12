@@ -19,9 +19,10 @@ interface LoggerInterface {
   error: (message: string, ...args: unknown[]) => void;
 }
 
-interface MomentInterface {
-  (date: string, format: string): { format: (format: string) => string };
-}
+type MomentInterface = (
+  date: string,
+  format: string
+) => { format: (format: string) => string };
 
 interface EXIFInterface {
   getData: (image: HTMLImageElement, callback: () => void) => void;

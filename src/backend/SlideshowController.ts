@@ -16,10 +16,10 @@ import ImageCache from './ImageCache';
 import MemoryMonitor from './MemoryMonitor';
 import type { ImageInfo, ModuleConfig } from '../types';
 
-export interface NotificationCallback {
-  (notification: string, payload?: unknown): void;
-}
-
+export type NotificationCallback = (
+  notification: string,
+  payload?: unknown
+) => void;
 /**
  * Main slideshow controller
  * Handles all business logic for the slideshow module
