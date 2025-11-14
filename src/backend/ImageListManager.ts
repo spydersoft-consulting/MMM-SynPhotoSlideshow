@@ -19,14 +19,32 @@ class ImageListManager {
     'modules/MMM-SynPhotoSlideshow/filesShownTracker.txt';
 
   /**
-   * Shuffle array randomly
+   * Shuffle array randomly using Fisher-Yates algorithm
+   * Seeds randomization with current timestamp to ensure different order on each restart
    */
   private shuffleArray(array: PhotoItem[]): PhotoItem[] {
     const shuffled = [...array];
+
+    // Create a simple seeded random number generator using current time
+    // This ensures different shuffle patterns on each restart
+    let seed = Date.now();
+    const seededRandom = (): number => {
+      seed = (seed * 9301 + 49297) % 233280;
+      return seed / 233280;
+    };
+
+    // First pass: shuffle with seeded random to break restart patterns
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(seededRandom() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    // Second pass: shuffle with Math.random for additional randomness
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
+
     return shuffled;
   }
 
