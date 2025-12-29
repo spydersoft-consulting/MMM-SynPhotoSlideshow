@@ -164,9 +164,23 @@ class ImageListManager {
     }
 
     // Filter out already shown images
-    const imageListToUse = config.showAllImagesBeforeRestart
+    let imageListToUse = config.showAllImagesBeforeRestart
       ? this.imageList.filter((image) => !this.alreadyShownSet.has(image.path))
       : this.imageList;
+
+    // If configured to show all images before restart, but the filter removed
+    // every image (i.e. all images were previously shown), reset the tracker
+    // and use the full list again so the slideshow can continue cycling.
+    if (
+      config.showAllImagesBeforeRestart &&
+      imageListToUse.length === 0 &&
+      this.imageList.length > 0
+    ) {
+      Log.info('All images were previously shown — resetting shown tracker');
+      this.resetShownImagesTracker();
+      // Rebuild the list after clearing tracker
+      imageListToUse = this.imageList;
+    }
 
     Log.info(
       `Skipped ${this.imageList.length - imageListToUse.length} already shown files`
