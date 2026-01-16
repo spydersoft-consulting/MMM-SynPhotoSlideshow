@@ -40,6 +40,10 @@ interface TagIds {
   [key: string]: number[];
 }
 
+interface AlbumIds {
+  [key: string]: number[];
+}
+
 class SynologyPhotosClient {
   private readonly baseUrl: string;
 
@@ -55,7 +59,7 @@ class SynologyPhotosClient {
 
   private sid: string | null = null;
 
-  private folderIds: number[] = [];
+  private albumIds: AlbumIds = {};
 
   private tagIds: TagIds = {};
 
@@ -126,47 +130,107 @@ class SynologyPhotosClient {
     }
 
     try {
-      const response = await axios.get(`${this.baseUrl}${this.photosApiPath}`, {
-        params: {
-          api: 'SYNO.Foto.Browse.Album',
-          version: '1',
-          method: 'list',
-          offset: 0,
-          limit: 100,
-          _sid: this.sid
-        },
-        timeout: 10000
-      });
-
-      if (response.data.success) {
-        const albums: SynologyAlbum[] = response.data.data.list;
-
-        if (!this.albumName) {
-          Log.info(`Found ${albums.length} albums, will fetch from all`);
-          this.folderIds = albums.map((album) => album.id);
-          return true;
-        }
-
-        const targetAlbum = albums.find(
-          (album) => album.name.toLowerCase() === this.albumName.toLowerCase()
-        );
-
-        if (targetAlbum) {
-          Log.info(`Found album: ${targetAlbum.name}`);
-          this.folderIds = [targetAlbum.id];
-          return true;
-        }
-        Log.warn(
-          `Album "${this.albumName}" not found. Available albums: ${albums.map((a) => a.name).join(', ')}`
-        );
-        return false;
-      }
-      Log.error(`Failed to list albums: ${JSON.stringify(response.data)}`);
-      return false;
+      this.albumIds = {};
+      return await this.findAlbumsInMultipleSpaces();
     } catch (error) {
       Log.error(`Error listing albums: ${(error as Error).message}`);
       return false;
     }
+  }
+
+  /**
+   * Find albums in a specific space
+   */
+  private async findAlbumsInSpace(space: {
+    id: number;
+    name: string;
+    api: string;
+  }): Promise<boolean> {
+    const params: Record<string, unknown> = {
+      api: space.api,
+      version: '1',
+      method: 'list',
+      offset: 0,
+      limit: 100,
+      _sid: this.sid
+    };
+
+    if (space.id === 0) {
+      params.space_id = 0;
+    }
+
+    const response = await axios.get(`${this.baseUrl}${this.photosApiPath}`, {
+      params,
+      timeout: 10000
+    });
+
+    if (!response.data.success) {
+      Log.warn(`Failed to list albums in ${space.name} space`);
+      return false;
+    }
+
+    const albums: SynologyAlbum[] = response.data.data.list;
+
+    if (!this.albumName) {
+      // Fetch from all albums in this space
+      if (albums.length > 0) {
+        this.albumIds[space.id] = albums.map((album) => album.id);
+        Log.info(`Found ${albums.length} album(s) in ${space.name} space`);
+        return true;
+      }
+      return false;
+    }
+
+    // Find specific album by name
+    const targetAlbum = albums.find(
+      (album) => album.name.toLowerCase() === this.albumName.toLowerCase()
+    );
+
+    if (targetAlbum) {
+      this.albumIds[space.id] = [targetAlbum.id];
+      Log.info(
+        `Found album "${targetAlbum.name}" in ${space.name} space (ID: ${targetAlbum.id})`
+      );
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Find albums across personal and shared spaces
+   */
+  private async findAlbumsInMultipleSpaces(): Promise<boolean> {
+    const spaces = [
+      { id: 0, name: 'personal', api: 'SYNO.Foto.Browse.Album' },
+      { id: 1, name: 'shared', api: 'SYNO.FotoTeam.Browse.Album' }
+    ];
+
+    let foundAnyAlbums = false;
+
+    for (const space of spaces) {
+      try {
+        const found = await this.findAlbumsInSpace(space);
+        if (found) {
+          foundAnyAlbums = true;
+        }
+      } catch (error) {
+        Log.warn(
+          `Error fetching albums from ${space.name} space: ${(error as Error).message}`
+        );
+      }
+    }
+
+    if (!foundAnyAlbums) {
+      if (this.albumName) {
+        Log.warn(`Album "${this.albumName}" not found in any space`);
+      } else {
+        Log.warn('No albums found in any space');
+      }
+      return false;
+    }
+
+    return true;
   }
 
   /**
@@ -357,13 +421,23 @@ class SynologyPhotosClient {
    * Fetch photos from albums
    */
   private async fetchPhotosFromAlbums(): Promise<PhotoItem[]> {
-    if (this.folderIds.length === 0) {
+    if (Object.keys(this.albumIds).length === 0) {
       return await this.fetchAllPhotos();
     }
 
-    const albumPromises = this.folderIds.map((folderId) =>
-      this.fetchAlbumPhotos(folderId)
-    );
+    const albumPromises: Promise<PhotoItem[]>[] = [];
+
+    for (const [spaceKey, albumIdArray] of Object.entries(this.albumIds)) {
+      const spaceId = Number.parseInt(spaceKey, 10);
+      Log.info(
+        `Fetching photos from ${albumIdArray.length} album(s) in space ${spaceId}`
+      );
+
+      for (const albumId of albumIdArray) {
+        albumPromises.push(this.fetchAlbumPhotos(albumId, spaceId));
+      }
+    }
+
     const photoArrays = await Promise.all(albumPromises);
     return photoArrays.flat();
   }
@@ -426,31 +500,65 @@ class SynologyPhotosClient {
   }
 
   /**
-   * Fetch all photos from Synology Photos
+   * Fetch all photos from Synology Photos (both personal and shared spaces)
    */
   private async fetchAllPhotos(): Promise<PhotoItem[]> {
+    const spaces = [
+      { id: 0, name: 'personal', api: 'SYNO.Foto.Browse.Item' },
+      { id: 1, name: 'shared', api: 'SYNO.FotoTeam.Browse.Item' }
+    ];
+
+    const fetchPromises = spaces.map((space) =>
+      this.fetchAllPhotosFromSpace(space.id, space.api)
+    );
+
+    const photoArrays = await Promise.all(fetchPromises);
+    return photoArrays.flat();
+  }
+
+  /**
+   * Fetch all photos from a specific space
+   */
+  private async fetchAllPhotosFromSpace(
+    spaceId: number,
+    api: string
+  ): Promise<PhotoItem[]> {
     try {
+      const params: Record<string, unknown> = {
+        api,
+        version: '1',
+        method: 'list',
+        offset: 0,
+        limit: this.maxPhotosToFetch,
+        _sid: this.sid,
+        additional:
+          '["thumbnail","resolution","orientation","video_convert","video_meta","provider_user_id"]'
+      };
+
+      if (spaceId === 0) {
+        params.space_id = 0;
+      }
+
       const response = await axios.get(`${this.baseUrl}${this.photosApiPath}`, {
-        params: {
-          api: 'SYNO.Foto.Browse.Item',
-          version: '1',
-          method: 'list',
-          offset: 0,
-          limit: this.maxPhotosToFetch,
-          _sid: this.sid,
-          additional:
-            '["thumbnail","resolution","orientation","video_convert","video_meta","provider_user_id"]'
-        },
+        params,
         timeout: 30000
       });
 
       if (response.data.success) {
-        return this.processPhotoList(response.data.data.list);
+        const photos = response.data.data.list;
+        Log.info(
+          `Fetched ${photos.length} photos from space ${spaceId} using ${api}`
+        );
+        return this.processPhotoList(photos, spaceId);
       }
-      Log.error(`Failed to fetch all photos: ${JSON.stringify(response.data)}`);
+      Log.warn(
+        `Failed to fetch photos from space ${spaceId}: ${JSON.stringify(response.data)}`
+      );
       return [];
     } catch (error) {
-      Log.error(`Error fetching all photos: ${(error as Error).message}`);
+      Log.warn(
+        `Error fetching photos from space ${spaceId}: ${(error as Error).message}`
+      );
       return [];
     }
   }
@@ -458,25 +566,43 @@ class SynologyPhotosClient {
   /**
    * Fetch photos from a specific album
    */
-  private async fetchAlbumPhotos(albumId: number): Promise<PhotoItem[]> {
+  private async fetchAlbumPhotos(
+    albumId: number,
+    spaceId: number
+  ): Promise<PhotoItem[]> {
     try {
+      const params: Record<string, unknown> = {
+        api:
+          spaceId === 1 ? 'SYNO.FotoTeam.Browse.Item' : 'SYNO.Foto.Browse.Item',
+        version: '1',
+        method: 'list',
+        offset: 0,
+        limit: this.maxPhotosToFetch,
+        album_id: albumId,
+        _sid: this.sid,
+        additional:
+          '["thumbnail","resolution","orientation","video_convert","video_meta","provider_user_id"]'
+      };
+
+      if (spaceId === 0) {
+        params.space_id = 0;
+      }
+
+      Log.info(
+        `Fetching photos from album ${albumId} in space ${spaceId} with API: ${params.api}`
+      );
+
       const response = await axios.get(`${this.baseUrl}${this.photosApiPath}`, {
-        params: {
-          api: 'SYNO.Foto.Browse.Item',
-          version: '1',
-          method: 'list',
-          offset: 0,
-          limit: this.maxPhotosToFetch,
-          album_id: albumId,
-          _sid: this.sid,
-          additional:
-            '["thumbnail","resolution","orientation","video_convert","video_meta","provider_user_id"]'
-        },
+        params,
         timeout: 30000
       });
 
       if (response.data.success) {
-        return this.processPhotoList(response.data.data.list);
+        const photos = response.data.data.list;
+        Log.info(
+          `Fetched ${photos.length} photos from album ${albumId} in space ${spaceId}`
+        );
+        return this.processPhotoList(photos, spaceId);
       }
       Log.error(
         `Failed to fetch album photos: ${JSON.stringify(response.data)}`

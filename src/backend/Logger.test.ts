@@ -13,8 +13,8 @@ const mockMagicMirrorLogger = {
   log: jest.fn()
 };
 
-// Mock the module before importing
-jest.mock('../../../js/logger.js', () => mockMagicMirrorLogger, {
+// Mock the logger module before importing
+jest.mock('logger', () => mockMagicMirrorLogger, {
   virtual: true
 });
 
@@ -25,8 +25,6 @@ describe('Logger', () => {
     jest.clearAllMocks();
     // Reset the internal logger instance to force re-initialization
     (Logger as unknown as { _log: unknown })._log = null;
-    // Make sure require returns our mock
-    jest.doMock('../../../js/logger.js', () => mockMagicMirrorLogger);
   });
 
   describe('singleton instance', () => {
@@ -227,7 +225,8 @@ describe('Logger', () => {
 
   describe('fallback behavior', () => {
     it('should fallback to console if MagicMirror logger not available', () => {
-      jest.resetModules();
+      // Reset the logger to null to force re-initialization
+      (Logger as unknown as { _log: unknown })._log = null;
 
       // Spy on console methods
       const consoleSpy = {
@@ -238,14 +237,11 @@ describe('Logger', () => {
         log: jest.spyOn(console, 'log').mockImplementation()
       };
 
-      // Mock require to throw error
-      jest.mock(
-        '../../../js/logger.js',
-        () => {
-          throw new Error('Logger not found');
-        },
-        { virtual: true }
-      );
+      // Unmock the logger module to trigger fallback
+      jest.unmock('logger');
+
+      // Force re-initialization which will fail and fall back to console
+      (Logger as unknown as { _log: unknown })._log = null;
 
       // Should use console instead
       Logger.info('Test');
@@ -258,8 +254,9 @@ describe('Logger', () => {
         '[MMM-SynPhotoSlideshow] Error'
       );
 
-      // Restore console
+      // Restore console and re-mock logger for other tests
       Object.values(consoleSpy).forEach((spy) => spy.mockRestore());
+      jest.doMock('logger', () => mockMagicMirrorLogger, { virtual: true });
     });
   });
 

@@ -158,7 +158,9 @@ describe('SynologyPhotosClient', () => {
       const result = await client.findAlbum();
 
       expect(result).toBe(true);
-      expect(Log.info).toHaveBeenCalledWith('Found album: TestAlbum');
+      expect(Log.info).toHaveBeenCalledWith(
+        expect.stringContaining('Found album "TestAlbum"')
+      );
     });
 
     test('should handle case-insensitive matching', async () => {
@@ -200,7 +202,167 @@ describe('SynologyPhotosClient', () => {
       const result = await client.findAlbum();
 
       expect(result).toBe(false);
-      expect(Log.error).toHaveBeenCalled();
+      expect(Log.warn).toHaveBeenCalled();
+    });
+
+    test('should find albums in both personal and shared spaces', async () => {
+      (axios.get as jest.Mock)
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: {
+              list: [{ id: 10, name: 'TestAlbum' }]
+            }
+          }
+        })
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: {
+              list: [{ id: 20, name: 'TestAlbum' }]
+            }
+          }
+        });
+
+      const result = await client.findAlbum();
+
+      expect(result).toBe(true);
+      expect(axios.get).toHaveBeenCalledTimes(2);
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          params: expect.objectContaining({
+            api: 'SYNO.Foto.Browse.Album'
+          })
+        })
+      );
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          params: expect.objectContaining({
+            api: 'SYNO.FotoTeam.Browse.Album'
+          })
+        })
+      );
+      expect(Log.info).toHaveBeenCalledWith(
+        expect.stringContaining('personal space')
+      );
+      expect(Log.info).toHaveBeenCalledWith(
+        expect.stringContaining('shared space')
+      );
+    });
+
+    test('should find albums only in personal space', async () => {
+      (axios.get as jest.Mock)
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: {
+              list: [{ id: 10, name: 'TestAlbum' }]
+            }
+          }
+        })
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: {
+              list: []
+            }
+          }
+        });
+
+      const result = await client.findAlbum();
+
+      expect(result).toBe(true);
+      expect(Log.info).toHaveBeenCalledWith(
+        expect.stringContaining('personal space')
+      );
+    });
+
+    test('should find albums only in shared space', async () => {
+      (axios.get as jest.Mock)
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: {
+              list: []
+            }
+          }
+        })
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: {
+              list: [{ id: 20, name: 'TestAlbum' }]
+            }
+          }
+        });
+
+      const result = await client.findAlbum();
+
+      expect(result).toBe(true);
+      expect(Log.info).toHaveBeenCalledWith(
+        expect.stringContaining('shared space')
+      );
+    });
+
+    test('should find all albums when no album name specified', async () => {
+      delete mockConfig.synologyAlbumName;
+      client = new SynologyPhotosClient(mockConfig as ModuleConfig);
+
+      (axios.get as jest.Mock)
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: {
+              list: [
+                { id: 1, name: 'Album1' },
+                { id: 2, name: 'Album2' }
+              ]
+            }
+          }
+        })
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: {
+              list: [{ id: 3, name: 'Album3' }]
+            }
+          }
+        });
+
+      const result = await client.findAlbum();
+
+      expect(result).toBe(true);
+      expect(Log.info).toHaveBeenCalledWith(
+        expect.stringContaining('Found 2 album(s) in personal space')
+      );
+      expect(Log.info).toHaveBeenCalledWith(
+        expect.stringContaining('Found 1 album(s) in shared space')
+      );
+    });
+
+    test('should handle partial space failures gracefully', async () => {
+      (axios.get as jest.Mock)
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: {
+              list: [{ id: 10, name: 'TestAlbum' }]
+            }
+          }
+        })
+        .mockRejectedValueOnce(new Error('Shared space error'));
+
+      const result = await client.findAlbum();
+
+      expect(result).toBe(true);
+      expect(Log.warn).toHaveBeenCalledWith(
+        expect.stringContaining('Error fetching albums from shared space')
+      );
+      expect(Log.info).toHaveBeenCalledWith(
+        expect.stringContaining('personal space')
+      );
     });
   });
 
@@ -318,7 +480,7 @@ describe('SynologyPhotosClient', () => {
       const result = await client.fetchPhotos();
 
       expect(result).toEqual([]);
-      expect(Log.error).toHaveBeenCalled();
+      expect(Log.warn).toHaveBeenCalled();
     });
 
     test('should handle empty photo list', async () => {
@@ -332,6 +494,359 @@ describe('SynologyPhotosClient', () => {
       const result = await client.fetchPhotos();
 
       expect(result).toEqual([]);
+    });
+
+    test('should fetch photos from albums in both personal and shared spaces', async () => {
+      // Mock authentication
+      (axios.get as jest.Mock).mockResolvedValueOnce({
+        data: {
+          success: true,
+          data: { sid: 'test-session' }
+        }
+      });
+
+      await client.authenticate();
+
+      // Mock findAlbum to populate albumIds
+      (axios.get as jest.Mock)
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: {
+              list: [{ id: 10, name: 'TestAlbum' }]
+            }
+          }
+        })
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: {
+              list: [{ id: 20, name: 'TestAlbum' }]
+            }
+          }
+        });
+
+      await client.findAlbum();
+
+      // Mock fetchPhotos - should query both spaces
+      (axios.get as jest.Mock)
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: {
+              list: [
+                {
+                  id: 1,
+                  type: 'photo',
+                  filename: 'personal.jpg',
+                  additional: { thumbnail: { cache_key: 'key1' } }
+                }
+              ]
+            }
+          }
+        })
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: {
+              list: [
+                {
+                  id: 2,
+                  type: 'photo',
+                  filename: 'shared.jpg',
+                  additional: { thumbnail: { cache_key: 'key2' } }
+                }
+              ]
+            }
+          }
+        });
+
+      const result = await client.fetchPhotos();
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toMatchObject({
+        path: 'personal.jpg',
+        synologyId: 1,
+        spaceId: 0
+      });
+      expect(result[1]).toMatchObject({
+        path: 'shared.jpg',
+        synologyId: 2,
+        spaceId: 1
+      });
+      expect(Log.info).toHaveBeenCalledWith(
+        expect.stringContaining('Fetched 1 photos from album 10 in space 0')
+      );
+      expect(Log.info).toHaveBeenCalledWith(
+        expect.stringContaining('Fetched 1 photos from album 20 in space 1')
+      );
+    });
+
+    test('should use correct API for personal space photos', async () => {
+      (axios.get as jest.Mock).mockResolvedValueOnce({
+        data: {
+          success: true,
+          data: { sid: 'test-session' }
+        }
+      });
+
+      await client.authenticate();
+
+      (axios.get as jest.Mock)
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: {
+              list: [{ id: 10, name: 'TestAlbum' }]
+            }
+          }
+        })
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: { list: [] }
+          }
+        });
+
+      await client.findAlbum();
+
+      (axios.get as jest.Mock).mockResolvedValueOnce({
+        data: {
+          success: true,
+          data: {
+            list: [
+              {
+                id: 1,
+                type: 'photo',
+                filename: 'photo.jpg',
+                additional: { thumbnail: { cache_key: 'key1' } }
+              }
+            ]
+          }
+        }
+      });
+
+      await client.fetchPhotos();
+
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          params: expect.objectContaining({
+            api: 'SYNO.Foto.Browse.Item',
+            album_id: 10,
+            space_id: 0
+          })
+        })
+      );
+    });
+
+    test('should use correct API for shared space photos', async () => {
+      (axios.get as jest.Mock).mockResolvedValueOnce({
+        data: {
+          success: true,
+          data: { sid: 'test-session' }
+        }
+      });
+
+      await client.authenticate();
+
+      (axios.get as jest.Mock)
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: { list: [] }
+          }
+        })
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: {
+              list: [{ id: 20, name: 'TestAlbum' }]
+            }
+          }
+        });
+
+      await client.findAlbum();
+
+      (axios.get as jest.Mock).mockResolvedValueOnce({
+        data: {
+          success: true,
+          data: {
+            list: [
+              {
+                id: 2,
+                type: 'photo',
+                filename: 'shared.jpg',
+                additional: { thumbnail: { cache_key: 'key2' } }
+              }
+            ]
+          }
+        }
+      });
+
+      await client.fetchPhotos();
+
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          params: expect.objectContaining({
+            api: 'SYNO.FotoTeam.Browse.Item',
+            album_id: 20
+          })
+        })
+      );
+      // Should NOT include space_id for shared space (space 1)
+      const lastCall = (axios.get as jest.Mock).mock.calls[
+        (axios.get as jest.Mock).mock.calls.length - 1
+      ];
+      expect(lastCall[1].params).not.toHaveProperty('space_id');
+    });
+
+    test('should fetch from all photos when no albums specified', async () => {
+      delete mockConfig.synologyAlbumName;
+      client = new SynologyPhotosClient(mockConfig as ModuleConfig);
+
+      (axios.get as jest.Mock).mockResolvedValueOnce({
+        data: {
+          success: true,
+          data: { sid: 'test-session' }
+        }
+      });
+
+      await client.authenticate();
+
+      // Mock findAlbum - no albums found
+      (axios.get as jest.Mock)
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: { list: [] }
+          }
+        })
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: { list: [] }
+          }
+        });
+
+      await client.findAlbum();
+
+      // Mock fetchAllPhotos from both spaces
+      (axios.get as jest.Mock)
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: {
+              list: [
+                {
+                  id: 1,
+                  type: 'photo',
+                  filename: 'all1.jpg',
+                  additional: { thumbnail: { cache_key: 'k1' } }
+                }
+              ]
+            }
+          }
+        })
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: {
+              list: [
+                {
+                  id: 2,
+                  type: 'photo',
+                  filename: 'all2.jpg',
+                  additional: { thumbnail: { cache_key: 'k2' } }
+                }
+              ]
+            }
+          }
+        });
+
+      const result = await client.fetchPhotos();
+
+      expect(result).toHaveLength(2);
+      expect(Log.info).toHaveBeenCalledWith(
+        expect.stringContaining('Fetched 1 photos from space 0')
+      );
+      expect(Log.info).toHaveBeenCalledWith(
+        expect.stringContaining('Fetched 1 photos from space 1')
+      );
+    });
+
+    test('should include spaceId in photo URLs for correct API selection', async () => {
+      (axios.get as jest.Mock).mockResolvedValueOnce({
+        data: {
+          success: true,
+          data: { sid: 'test-session' }
+        }
+      });
+
+      await client.authenticate();
+
+      (axios.get as jest.Mock)
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: {
+              list: [{ id: 10, name: 'TestAlbum' }]
+            }
+          }
+        })
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: {
+              list: [{ id: 20, name: 'TestAlbum' }]
+            }
+          }
+        });
+
+      await client.findAlbum();
+
+      (axios.get as jest.Mock)
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: {
+              list: [
+                {
+                  id: 1,
+                  type: 'photo',
+                  filename: 'personal.jpg',
+                  additional: { thumbnail: { cache_key: 'key1' } }
+                }
+              ]
+            }
+          }
+        })
+        .mockResolvedValueOnce({
+          data: {
+            success: true,
+            data: {
+              list: [
+                {
+                  id: 2,
+                  type: 'photo',
+                  filename: 'shared.jpg',
+                  additional: { thumbnail: { cache_key: 'key2' } }
+                }
+              ]
+            }
+          }
+        });
+
+      const result = await client.fetchPhotos();
+
+      // Personal space photo should use SYNO.Foto.Thumbnail
+      expect(result[0].url).toContain('SYNO.Foto.Thumbnail');
+      expect(result[0].url).toContain('space_id=0');
+
+      // Shared space photo should use SYNO.FotoTeam.Thumbnail
+      expect(result[1].url).toContain('SYNO.FotoTeam.Thumbnail');
+      expect(result[1].url).not.toContain('space_id');
     });
   });
 
