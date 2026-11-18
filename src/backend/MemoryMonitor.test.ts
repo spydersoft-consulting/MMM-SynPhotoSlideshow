@@ -5,9 +5,13 @@
  */
 
 jest.mock('./Logger');
+jest.mock('node:v8', () => ({
+  getHeapStatistics: jest.fn(() => ({ heap_size_limit: 100 * 1024 * 1024 }))
+}));
 
 import MemoryMonitor from './MemoryMonitor';
 import Log from './Logger';
+import { getHeapStatistics } from 'node:v8';
 
 describe('MemoryMonitor', () => {
   let monitor: MemoryMonitor;
@@ -156,7 +160,7 @@ describe('MemoryMonitor', () => {
       monitor.checkMemory();
 
       expect(Log.debug).toHaveBeenCalledWith(
-        'Memory: 50.00MB / 100.00MB (50.0%)'
+        'Memory: 50.00MB / 100.00MB limit (50.0%), rss 150.00MB'
       );
     });
 
@@ -176,6 +180,24 @@ describe('MemoryMonitor', () => {
       expect(Log.warn).toHaveBeenCalledWith(
         'High memory usage detected (90.0%), triggering cleanup'
       );
+    });
+
+    it('should not warn when heap is near heapTotal but far below the V8 limit', () => {
+      (process.memoryUsage as unknown as jest.Mock).mockReturnValue({
+        heapUsed: 95 * 1024 * 1024,
+        heapTotal: 100 * 1024 * 1024,
+        rss: 150 * 1024 * 1024,
+        external: 10 * 1024 * 1024,
+        arrayBuffers: 5 * 1024 * 1024
+      });
+      (getHeapStatistics as jest.Mock).mockReturnValueOnce({
+        heap_size_limit: 4000 * 1024 * 1024
+      });
+      Date.now = jest.fn(() => 70000);
+
+      monitor.checkMemory();
+
+      expect(Log.warn).not.toHaveBeenCalled();
     });
 
     it('should not warn when memory usage is below threshold', () => {

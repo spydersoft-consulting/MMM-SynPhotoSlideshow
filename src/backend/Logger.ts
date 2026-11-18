@@ -27,7 +27,7 @@ class Logger {
     if (!this._log) {
       try {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        this._log = require('../../../js/logger.js') as LoggerInterface;
+        this._log = require('logger') as LoggerInterface;
       } catch {
         // Fallback to console if logger not available (e.g., in tests)
         this._log = console;
