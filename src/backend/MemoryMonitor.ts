@@ -4,6 +4,7 @@
  * Monitors memory usage and triggers cleanup when needed
  */
 
+import { getHeapStatistics } from 'node:v8';
 import Log from './Logger';
 import type { ModuleConfig } from '../types';
 
@@ -68,11 +69,15 @@ class MemoryMonitor {
    */
   checkMemory(): void {
     const usage = process.memoryUsage();
-    const { heapUsed, heapTotal } = usage;
-    const heapPercent = heapUsed / heapTotal;
+    const { heapUsed, rss } = usage;
+    // Compare against V8's hard heap limit. heapTotal is the currently
+    // allocated size, which V8 keeps close to heapUsed, so heapUsed/heapTotal
+    // is almost always >90% and says nothing about real memory pressure.
+    const heapLimit = getHeapStatistics().heap_size_limit;
+    const heapPercent = heapUsed / heapLimit;
 
     Log.debug(
-      `Memory: ${(heapUsed / 1024 / 1024).toFixed(2)}MB / ${(heapTotal / 1024 / 1024).toFixed(2)}MB (${(heapPercent * 100).toFixed(1)}%)`
+      `Memory: ${(heapUsed / 1024 / 1024).toFixed(2)}MB / ${(heapLimit / 1024 / 1024).toFixed(2)}MB limit (${(heapPercent * 100).toFixed(1)}%), rss ${(rss / 1024 / 1024).toFixed(2)}MB`
     );
 
     // Trigger cleanup if memory usage is high

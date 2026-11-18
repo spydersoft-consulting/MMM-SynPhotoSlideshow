@@ -14,7 +14,7 @@ const mockMagicMirrorLogger = {
 };
 
 // Mock the module before importing
-jest.mock('../../../js/logger.js', () => mockMagicMirrorLogger, {
+jest.mock('logger', () => mockMagicMirrorLogger, {
   virtual: true
 });
 
@@ -26,7 +26,7 @@ describe('Logger', () => {
     // Reset the internal logger instance to force re-initialization
     (Logger as unknown as { _log: unknown })._log = null;
     // Make sure require returns our mock
-    jest.doMock('../../../js/logger.js', () => mockMagicMirrorLogger);
+    jest.doMock('logger', () => mockMagicMirrorLogger);
   });
 
   describe('singleton instance', () => {
@@ -240,7 +240,7 @@ describe('Logger', () => {
 
       // Mock require to throw error
       jest.mock(
-        '../../../js/logger.js',
+        'logger',
         () => {
           throw new Error('Logger not found');
         },
